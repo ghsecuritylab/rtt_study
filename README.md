@@ -1,0 +1,2 @@
+# rtt_study
+学习rtt系统的各个组件和demo实验用的仓库，硬件在stm32f40x核心板上
