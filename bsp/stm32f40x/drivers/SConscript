@@ -7,6 +7,9 @@ src = Split("""
 board.c
 stm32f4xx_it.c
 usart.c
+spi.c
+drv_hwtimer.c
+sys.c
 sdcard.c
 """)
 
@@ -27,6 +30,7 @@ if GetDepend('RT_USING_W25QXX'):
     src += ['w25qxx.c']
 
 CPPPATH = [cwd]
+CPPPATH += [cwd + '/../../../components/drivers/include/drivers/']
 
 group = DefineGroup('Drivers', src, depend = [''], CPPPATH = CPPPATH)
 

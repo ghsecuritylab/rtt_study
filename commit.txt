@@ -1,2 +1,19 @@
-﻿移植rt_thread 到stm32f407ev 第一版
-2019-3-1 ：使用SD卡，成功将sd卡挂载在elm_fatfs上，并将elm挂载在dfs上，在msh中可以使用命令来操作fatfs文件系统了。
+﻿修改人：xiaqiyun
+修改机型：rt_thread
+修改原因：
+	1. 添加了图像调试组件，可以成功运行并捕获系统任务和事件。
+	2. 已修改scons脚本，目前可以通过scons --target=mdk5来生成keil5的工程并编译通过。
+	3. 使用调试模块并不需要做什么额外的工作，只需要包网络包下载下来，编译就可以了，必须使用JLINK的SWD
+	来调试。详细pc端的设置和运行请看SCONS的官方文档指南。	
+修改文件:      
+	modified:   bsp/stm32f40x/.config
+        modified:   bsp/stm32f40x/JLinkLog.txt
+        modified:   bsp/stm32f40x/drivers/SConscript
+        modified:   bsp/stm32f40x/project.uvguix.xiaqiyun
+        modified:   bsp/stm32f40x/project.uvoptx
+        deleted:    bsp/stm32f40x/project.uvproj
+        modified:   bsp/stm32f40x/project.uvprojx
+        modified:   bsp/stm32f40x/rtconfig.h
+        deleted:    components/drivers/spi/device_driver_list.txt
+
+硬件版本说明：无
