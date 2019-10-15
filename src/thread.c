@@ -184,7 +184,7 @@ static rt_err_t _rt_thread_init(struct rt_thread *thread,
                   rt_thread_timeout,
                   thread,
                   0,
-                  RT_TIMER_FLAG_ONE_SHOT);
+                  RT_TIMER_FLAG_ONE_SHOT);//默认是硬件定时器
 
     /* initialize signal */
 #ifdef RT_USING_SIGNALS

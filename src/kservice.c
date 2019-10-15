@@ -1246,7 +1246,10 @@ RTM_EXPORT(rt_free_align);
 
 #ifndef RT_USING_CPU_FFS
 const rt_uint8_t __lowest_bit_bitmap[] =
-{
+{   //该位图是用于快速查找一个字节中最低不为0的序号，通过查表一次性获得结果，而不用循环比较
+    //一字节为8位，可表示数字最大为255，所以从0到255中的每一个数都可以根据二进制来判断其表示
+    //的最低序号，然后根据该结果绘制出一个数组表格，eg:2和1,1最低位为1,所以序号为0,2第1位位1,
+    //所以序号为1，16第4位为1，所以序号为4.......。
     /* 00 */ 0, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
     /* 10 */ 4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
     /* 20 */ 5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
@@ -1277,18 +1280,19 @@ const rt_uint8_t __lowest_bit_bitmap[] =
  */
 int __rt_ffs(int value)
 {
+    //该函数兼容32优先级和255优先级，非常巧妙
     if (value == 0) return 0;
 
-    if (value & 0xff)
+    if (value & 0xff)//不为0在低八位
         return __lowest_bit_bitmap[value & 0xff] + 1;
 
-    if (value & 0xff00)
+    if (value & 0xff00)//在8-15位
         return __lowest_bit_bitmap[(value & 0xff00) >> 8] + 9;
 
-    if (value & 0xff0000)
+    if (value & 0xff0000)//传入32位，可以直接返回最低不为0的顺序序号
         return __lowest_bit_bitmap[(value & 0xff0000) >> 16] + 17;
 
-    return __lowest_bit_bitmap[(value & 0xff000000) >> 24] + 25;
+    return __lowest_bit_bitmap[(value & 0xff000000) >> 24] + 25;//在高八位
 }
 #endif
 

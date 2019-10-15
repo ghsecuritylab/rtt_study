@@ -649,6 +649,8 @@ static void rt_thread_timer_entry(void *parameter)
             /* no software timer exist, suspend self. */
             rt_thread_suspend(rt_thread_self());
             rt_schedule();
+            //当没有软件定时器时，挂起自己，当有任务新建软件定时器时
+            //会检查该任务，如果挂起，则会唤醒该任务
         }
         else
         {
@@ -662,11 +664,14 @@ static void rt_thread_timer_entry(void *parameter)
                 /* get the delta timeout tick */
                 next_timeout = next_timeout - current_tick;
                 rt_thread_delay(next_timeout);
+                //当定时器还未超时时，睡眠该任务
             }
         }
 
         /* check software timer */
         rt_soft_timer_check();
+        //到这里时，肯定有一个定时器超时，检查执行超时任务，根据标志
+        //移除定时器或者重启该定时器
     }
 }
 #endif

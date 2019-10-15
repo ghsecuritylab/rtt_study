@@ -261,28 +261,28 @@ int rtthread_startup(void)
     /* timer system initialization */
     rt_system_timer_init();
     /* scheduler system initialization */
-    rt_system_scheduler_init();
-
+    rt_system_scheduler_init();//将位图初始化为0，线程列表，默认线程节点初始化为指向自己
+    //后续才开始建任务，修改位图和插入链表，最后才开始调度
 #ifdef RT_USING_SIGNALS
     /* signal system initialization */
     rt_system_signal_init();
 #endif
 
     /* create init_thread */
-    rt_application_init();
+    rt_application_init();//建用户任务
 
     /* timer thread initialization */
-    rt_system_timer_thread_init();
+    rt_system_timer_thread_init();//建软定时器任务
 
     /* idle thread initialization */
-    rt_thread_idle_init();
+    rt_thread_idle_init();//建空闲任务
 
 #ifdef RT_USING_SMP
     rt_hw_spin_lock(&_cpus_lock);
 #endif /*RT_USING_SMP*/
 
     /* start scheduler */
-    rt_system_scheduler_start();
+    rt_system_scheduler_start();//开始调度，取最高优先级开始执行，交由系统
 
     /* never reach here */
     return 0;

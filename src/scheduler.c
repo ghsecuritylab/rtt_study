@@ -37,18 +37,21 @@
 rt_hw_spinlock_t _rt_critical_lock;
 #endif /*RT_USING_SMP*/
 
-rt_list_t rt_thread_priority_table[RT_THREAD_PRIORITY_MAX];
-rt_uint32_t rt_thread_ready_priority_group;
+rt_list_t rt_thread_priority_table[RT_THREAD_PRIORITY_MAX];//优先级线程链表数组，每个优先级一个入口节点
+                                                           //每个节点表示对应优先级的任务的入口，相同优先级
+                                                           //任务插入在链表最后，时间片轮转
+rt_uint32_t rt_thread_ready_priority_group;//32位数据，每一位代表一个优先级，0代表未就绪，1代表就绪
 #if RT_THREAD_PRIORITY_MAX > 32
 /* Maximum priority level, 256 */
-rt_uint8_t rt_thread_ready_table[32];
+rt_uint8_t rt_thread_ready_table[32];//最大支持256任务，通过32字节来表示，将该数组看成一个整体，每位代表一个级
+//32字节刚好是256位
 #endif
 
 #ifndef RT_USING_SMP
-extern volatile rt_uint8_t rt_interrupt_nest;
-static rt_int16_t rt_scheduler_lock_nest;
-struct rt_thread *rt_current_thread;
-rt_uint8_t rt_current_priority;
+extern volatile rt_uint8_t rt_interrupt_nest;//中断嵌套变量
+static rt_int16_t rt_scheduler_lock_nest;//调度锁嵌套变量
+struct rt_thread *rt_current_thread;//当前线程
+rt_uint8_t rt_current_priority;//当前优先级
 #endif /*RT_USING_SMP*/
 
 rt_list_t rt_thread_defunct;
@@ -175,13 +178,16 @@ static struct rt_thread* _get_highest_priority_thread(rt_ubase_t *highest_prio)
 #if RT_THREAD_PRIORITY_MAX > 32
     register rt_ubase_t number;
 
-    number = __rt_ffs(rt_thread_ready_priority_group) - 1;
-    highest_ready_priority = (number << 3) + __rt_ffs(rt_thread_ready_table[number]) - 1;
+    number = __rt_ffs(rt_thread_ready_priority_group) - 1;//现在所在数组，number乘以8，获得该数组的起始优先级
+    highest_ready_priority = (number << 3) + __rt_ffs(rt_thread_ready_table[number]) - 1;//起始优先级加上数组中的序号
+    //就等于实际的优先级
 #else
-    highest_ready_priority = __rt_ffs(rt_thread_ready_priority_group) - 1;
+    highest_ready_priority = __rt_ffs(rt_thread_ready_priority_group) - 1;//32优先级使用，为啥加减一待研究
 #endif
 
     /* get highest ready priority thread */
+    //一个就绪线程链表中，最先执行的为链表入口节点的下一个节点，运行完后将其插入到最后
+    //该函数通过结构体中的成员地址反推出该结构体的首地址，而获取到完成的线程控制块
     highest_priority_thread = rt_list_entry(rt_thread_priority_table[highest_ready_priority].next,
                               struct rt_thread,
                               tlist);
@@ -212,7 +218,7 @@ void rt_system_scheduler_init(void)
 
     for (offset = 0; offset < RT_THREAD_PRIORITY_MAX; offset ++)
     {
-        rt_list_init(&rt_thread_priority_table[offset]);
+        rt_list_init(&rt_thread_priority_table[offset]);//双向链表的初始化，前后指针都指向自己
     }
 #ifdef RT_USING_SMP
     for (cpu = 0; cpu < RT_CPUS_NR; cpu++)
@@ -235,15 +241,15 @@ void rt_system_scheduler_init(void)
 #endif /*RT_USING_SMP*/
 
     /* initialize ready priority group */
-    rt_thread_ready_priority_group = 0;
+    rt_thread_ready_priority_group = 0;//初始化为所有都未就绪
 
 #if RT_THREAD_PRIORITY_MAX > 32
     /* initialize ready table */
-    rt_memset(rt_thread_ready_table, 0, sizeof(rt_thread_ready_table));
+    rt_memset(rt_thread_ready_table, 0, sizeof(rt_thread_ready_table));//255任务所需要
 #endif
 
     /* initialize thread defunct */
-    rt_list_init(&rt_thread_defunct);
+    rt_list_init(&rt_thread_defunct);//默认线程链表入口节点，当有线程delete，detach，exit时会将其插入到最后
 }
 
 /**
@@ -256,7 +262,7 @@ void rt_system_scheduler_start(void)
     register struct rt_thread *to_thread;
     rt_ubase_t highest_ready_priority;
 
-    to_thread = _get_highest_priority_thread(&highest_ready_priority);
+    to_thread = _get_highest_priority_thread(&highest_ready_priority);//查找最高优先级和对应任务
 
 #ifdef RT_USING_SMP
     to_thread->oncpu = rt_hw_cpu_id();
@@ -264,14 +270,14 @@ void rt_system_scheduler_start(void)
     rt_current_thread = to_thread;
 #endif /*RT_USING_SMP*/
 
-    rt_schedule_remove_thread(to_thread);
+    rt_schedule_remove_thread(to_thread);//将线程溢出就绪链表
     to_thread->stat = RT_THREAD_RUNNING;
 
     /* switch to new thread */
 #ifdef RT_USING_SMP
     rt_hw_context_switch_to((rt_ubase_t)&to_thread->sp, to_thread);
 #else
-    rt_hw_context_switch_to((rt_ubase_t)&to_thread->sp);
+    rt_hw_context_switch_to((rt_ubase_t)&to_thread->sp);//压栈处理，切换到任务开始运行
 #endif /*RT_USING_SMP*/
 
     /* never come back */
@@ -406,25 +412,29 @@ void rt_schedule(void)
     level = rt_hw_interrupt_disable();
 
     /* check the scheduler is enabled or not */
-    if (rt_scheduler_lock_nest == 0)
+    if (rt_scheduler_lock_nest == 0)//调度器没锁则调度，不为0代表被锁，不调度任务
     {
         rt_ubase_t highest_ready_priority;
 
-        if (rt_thread_ready_priority_group != 0)
+        if (rt_thread_ready_priority_group != 0)//如果为0会怎么样的，为啥会怎么判断呢？
         {
             /* need_insert_from_thread: need to insert from_thread to ready queue */
             int need_insert_from_thread = 0;
 
-            to_thread = _get_highest_priority_thread(&highest_ready_priority);
-
+            to_thread = _get_highest_priority_thread(&highest_ready_priority);//该获取的线程肯定不是当前线程rt_current_thread
+            //因为当前运行的线程是被移出了就绪表的
             if ((rt_current_thread->stat & RT_THREAD_STAT_MASK) == RT_THREAD_RUNNING)
             {
-                if (rt_current_thread->current_priority < highest_ready_priority)
+                if (rt_current_thread->current_priority < highest_ready_priority)//让出后发现没有其他相同优先级线程
                 {
-                    to_thread = rt_current_thread;
+                    to_thread = rt_current_thread;//这个可能出现在线程让出控制权给相同优先级线程时
                 }
                 else
                 {
+                    //该步出现在：
+                    //1:当前优先级大于就绪优先级：当前线程被抢占
+                    //2:当前优先级等于就绪优先级：当前线程时间片到时了，让出CPU给相同优先级的其他任务
+                    //需要将该线程加入对应优先级线程链表的尾部
                     need_insert_from_thread = 1;
                 }
             }
@@ -440,11 +450,12 @@ void rt_schedule(void)
 
                 if (need_insert_from_thread)
                 {
-                    rt_schedule_insert_thread(from_thread);
+                    rt_schedule_insert_thread(from_thread);//将线程插入就绪列表尾部
+                    //那被抢占的任务也被放在尾部了？等于放弃了剩余的时间片了？
                 }
 
-                rt_schedule_remove_thread(to_thread);
-                to_thread->stat = RT_THREAD_RUNNING | (to_thread->stat & ~RT_THREAD_STAT_MASK);
+                rt_schedule_remove_thread(to_thread);//将将要运行的任务移出链表
+                to_thread->stat = RT_THREAD_RUNNING | (to_thread->stat & ~RT_THREAD_STAT_MASK);//改为运行态
 
                 /* switch to new thread */
                 RT_DEBUG_LOG(RT_DEBUG_SCHEDULER,
@@ -459,7 +470,7 @@ void rt_schedule(void)
                 _rt_scheduler_stack_check(to_thread);
 #endif
 
-                if (rt_interrupt_nest == 0)
+                if (rt_interrupt_nest == 0)//线程调度
                 {
                     extern void rt_thread_handle_sig(rt_bool_t clean_state);
 
@@ -475,7 +486,7 @@ void rt_schedule(void)
 #endif
                     goto __exit;
                 }
-                else
+                else//中断调度
                 {
                     RT_DEBUG_LOG(RT_DEBUG_SCHEDULER, ("switch in interrupt\n"));
 
@@ -485,8 +496,11 @@ void rt_schedule(void)
             }
             else
             {
-                rt_schedule_remove_thread(rt_current_thread);
+                //该种情况只存在：当前线程rt_thread_yield时，但无其他同级任务，又重新开始运行当前的任务
+                rt_schedule_remove_thread(rt_current_thread);//将当前的任务移出就绪链表
+                //但为啥需要移除该链表呢，是在什么情况下任务还在就绪列表中呢？该链表是正在运行的，是不存在就绪链表当中的
                 rt_current_thread->stat = RT_THREAD_RUNNING | (rt_current_thread->stat & ~RT_THREAD_STAT_MASK);
+                //将线程状态修改为正在运行态
             }
         }
     }
@@ -666,10 +680,10 @@ void rt_schedule_insert_thread(struct rt_thread *thread)
     }
 
     /* READY thread, insert to ready queue */
-    thread->stat = RT_THREAD_READY | (thread->stat & ~RT_THREAD_STAT_MASK);
+    thread->stat = RT_THREAD_READY | (thread->stat & ~RT_THREAD_STAT_MASK);//把线程状态的4位先清零，再置位
     /* insert thread to ready list */
     rt_list_insert_before(&(rt_thread_priority_table[thread->current_priority]),
-                          &(thread->tlist));
+                          &(thread->tlist));//插在链表的最后，节点的前面，双向链表
 
     RT_DEBUG_LOG(RT_DEBUG_SCHEDULER, ("insert thread[%.*s], the priority: %d\n",
                                       RT_NAME_MAX, thread->name, thread->current_priority));
@@ -761,13 +775,14 @@ void rt_schedule_remove_thread(struct rt_thread *thread)
 
     /* remove thread from ready list */
     rt_list_remove(&(thread->tlist));
-    if (rt_list_isempty(&(rt_thread_priority_table[thread->current_priority])))
+    if (rt_list_isempty(&(rt_thread_priority_table[thread->current_priority])))//链表为空
     {
 #if RT_THREAD_PRIORITY_MAX > 32
-        rt_thread_ready_table[thread->number] &= ~thread->high_mask;
+    //当在该优先级序号链表上面没有就绪线程时，就将位图归零
+        rt_thread_ready_table[thread->number] &= ~thread->high_mask;//优先级数组的线程序号掩码，8位
         if (rt_thread_ready_table[thread->number] == 0)
         {
-            rt_thread_ready_priority_group &= ~thread->number_mask;
+            rt_thread_ready_priority_group &= ~thread->number_mask;//储存在线程中的该线程的优先级序号掩码，32位
         }
 #else
         rt_thread_ready_priority_group &= ~thread->number_mask;
