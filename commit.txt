@@ -1,13 +1,8 @@
 ﻿修改人：xiaqiyun
 修改机型：rt_thread
 修改原因：
-	1. 用来测试esp8266,在stm32 	
+	1. 去掉多余的bsp包和CPU适配包，保留stm32f4的相关代码。
+	2. 理解内核代码，读代码并注释理解。
 修改文件:      
-	 modified:   bsp/stm32f40x/.config
-        modified:   bsp/stm32f40x/project.uvguix.xiaqiyun
-        modified:   bsp/stm32f40x/project.uvoptx
-        modified:   bsp/stm32f40x/project.uvprojx
-        modified:   bsp/stm32f40x/rtconfig.h
-
-
+	 
 硬件版本说明：无

@@ -76,21 +76,26 @@ rt_inline rt_err_t rt_ipc_object_init(struct rt_ipc_object *ipc)
  *
  * @return the operation status, RT_EOK on successful
  */
+ //该函数一般都在尝试获取资源时调用的
 rt_inline rt_err_t rt_ipc_list_suspend(rt_list_t        *list,
                                        struct rt_thread *thread,
                                        rt_uint8_t        flag)
 {
     /* suspend thread */
-    rt_thread_suspend(thread);
+    rt_thread_suspend(thread);//从就绪列表中移除，只有正在运行和就绪状态的线程可以被挂起
 
     switch (flag)
     {
-    case RT_IPC_FLAG_FIFO:
+    case RT_IPC_FLAG_FIFO://先进先出原则，先在该IPC对象上挂起的线程先获取该对象
+        //所以将该线程插在了双向链表的最后面，和线程就绪表相同，都是取入口的下
+        //一个线程
         rt_list_insert_before(list, &(thread->tlist));
         break;
 
     case RT_IPC_FLAG_PRIO:
-        {
+        {//按线程优先级的顺序来排列获取IPC对象的优先顺序
+         //高优先级的排在靠前的位置，当有该对象资源时，
+         //优先获得该资源
             struct rt_list_node *n;
             struct rt_thread *sthread;
 
@@ -100,6 +105,7 @@ rt_inline rt_err_t rt_ipc_list_suspend(rt_list_t        *list,
                 sthread = rt_list_entry(n, struct rt_thread, tlist);
 
                 /* find out */
+                //找优先级比自己低的，就插在该线程前面
                 if (thread->current_priority < sthread->current_priority)
                 {
                     /* insert this thread before the sthread */
@@ -112,7 +118,7 @@ rt_inline rt_err_t rt_ipc_list_suspend(rt_list_t        *list,
              * not found a suitable position,
              * append to the end of suspend_thread list
              */
-            if (n == list)
+            if (n == list)//在等待该对象的挂起线程链表中没有更低优先级的，插在最后
                 rt_list_insert_before(list, &(thread->tlist));
         }
         break;
@@ -130,6 +136,7 @@ rt_inline rt_err_t rt_ipc_list_suspend(rt_list_t        *list,
  *
  * @return the operation status, RT_EOK on successful
  */
+ //恢复挂起链表中的第一个线程，将其变为就绪态，加入就绪链表，并移出挂起链表
 rt_inline rt_err_t rt_ipc_list_resume(rt_list_t *list)
 {
     struct rt_thread *thread;
@@ -236,9 +243,9 @@ rt_err_t rt_sem_detach(rt_sem_t sem)
 
     /* wakeup all suspend threads */
     rt_ipc_list_resume_all(&(sem->parent.suspend_thread));
-
     /* detach semaphore object */
     rt_object_detach(&(sem->parent.parent));
+    //在对象管理器中的信号量链表中删除该信号量
 
     return RT_EOK;
 }

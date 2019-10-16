@@ -85,18 +85,18 @@ void rt_tick_increase(void)
     /* check time slice */
     thread = rt_thread_self();
 
-    -- thread->remaining_tick;
+    -- thread->remaining_tick;//对当前线程的时间片减一，当为0时让出CPU使用权
     if (thread->remaining_tick == 0)
     {
         /* change to initialized tick */
         thread->remaining_tick = thread->init_tick;
-
+        //重新初始化该tick
         /* yield */
-        rt_thread_yield();
+        rt_thread_yield();//调度，让出CPU使用权
     }
 
     /* check timer */
-    rt_timer_check();
+    rt_timer_check();//检测硬件定时器链表，处理到时的超时任务
 }
 
 /**
