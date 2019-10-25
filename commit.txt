@@ -1,8 +1,10 @@
 ﻿修改人：xiaqiyun
 修改机型：rt_thread
 修改原因：
-	1. 去掉多余的bsp包和CPU适配包，保留stm32f4的相关代码。
-	2. 理解内核代码，读代码并注释理解。
-修改文件:      
+	1. 内核注释2
+修改文件:  
+	modified:   commit.txt
+        modified:   src/clock.c
+        modified:   src/ipc.c   
 	 
 硬件版本说明：无
