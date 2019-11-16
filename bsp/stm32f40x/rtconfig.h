@@ -22,14 +22,6 @@
 #define RT_DEBUG
 #define RT_DEBUG_INIT_CONFIG
 #define RT_DEBUG_INIT 1
-#define RT_DEBUG_MEM_CONFIG
-#define RT_DEBUG_MEM 1
-#define RT_DEBUG_SLAB_CONFIG
-#define RT_DEBUG_SLAB 1
-#define RT_DEBUG_MEMHEAP_CONFIG
-#define RT_DEBUG_MEMHEAP 1
-#define RT_DEBUG_MODULE_CONFIG
-#define RT_DEBUG_MODULE 1
 
 /* Inter-Thread communication */
 
@@ -38,6 +30,7 @@
 #define RT_USING_EVENT
 #define RT_USING_MAILBOX
 #define RT_USING_MESSAGEQUEUE
+#define RT_USING_SIGNALS
 
 /* Memory Management */
 
@@ -52,7 +45,7 @@
 #define RT_USING_DEVICE
 #define RT_USING_INTERRUPT_INFO
 #define RT_USING_CONSOLE
-#define RT_CONSOLEBUF_SIZE 128
+#define RT_CONSOLEBUF_SIZE 256
 #define RT_CONSOLE_DEVICE_NAME "uart1"
 #define RT_VER_NUM 0x40000
 #define ARCH_ARM
@@ -123,6 +116,17 @@
 
 /* Using USB */
 
+#define RT_USING_USB_DEVICE
+#define RT_USBD_THREAD_STACK_SZ 4096*2
+#define USB_VENDOR_ID 0x294A
+#define USB_PRODUCT_ID 0x1A01
+#define RT_USB_DEVICE_COMPOSITE
+#define RT_USB_DEVICE_CDC
+#define RT_USB_DEVICE_NONE
+#define RT_VCOM_TASK_STK_SIZE 512
+#define RT_VCOM_SERNO "32021919830108"
+#define RT_VCOM_SER_LEN 14
+#define RT_VCOM_TX_TIMEOUT 1000
 
 /* POSIX layer and C standard library */
 
@@ -162,6 +166,7 @@
 
 /* Utilities */
 
+#define RT_USING_RYM
 
 /* ARM CMSIS */
 
@@ -180,13 +185,20 @@
 
 /* Wiced WiFi */
 
+#define PKG_USING_NETUTILS
+#define PKG_NETUTILS_IPERF
+#define PKG_NETUTILS_NTP
+#define NETUTILS_NTP_TIMEZONE 8
+#define NETUTILS_NTP_HOSTNAME "cn.ntp.org.cn"
+#define PKG_NETUTILS_TELNET
+#define PKG_USING_NETUTILS_LATEST_VERSION
 #define PKG_USING_AT_DEVICE
 #define PKG_AT_INIT_BY_THREAD
 #define AT_DEVICE_ESP8266
 #define AT_DEVICE_SOCKETS_NUM 5
 #define AT_DEVICE_NAME "uart2"
 #define AT_DEVICE_RECV_BUFF_LEN 512
-#define AT_DEVICE_WIFI_SSID "rtthread"
+#define AT_DEVICE_WIFI_SSID "wifikiller"
 #define AT_DEVICE_WIFI_PASSWORD "12345678"
 #define PKG_USING_AT_DEVICE_V140
 #define PKG_AT_DEVICE_VER_NUM 0x10400
@@ -213,6 +225,8 @@
 
 /* peripheral libraries and drivers */
 
+/* sensors drivers */
+
 
 /* miscellaneous packages */
 
@@ -223,5 +237,6 @@
 
 #define SOC_STM32F4
 #define RT_USING_UART1
+#define RT_USING_UART2
 
 #endif

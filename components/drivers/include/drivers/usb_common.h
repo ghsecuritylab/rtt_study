@@ -567,7 +567,7 @@ typedef struct ustorage_csw* ustorage_csw_t;
 
 /* the priority of USB thread */
 #ifndef RT_USBD_THREAD_PRIO
-#define RT_USBD_THREAD_PRIO 8
+#define RT_USBD_THREAD_PRIO 7
 #endif
 
 

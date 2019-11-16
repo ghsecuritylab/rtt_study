@@ -719,16 +719,17 @@ static rt_err_t _vendor_request(udevice_t device, ureq_t setup)
     }
     return RT_EOK;
 }
+#define RT_DEBUG_USB1 0
 static rt_err_t _dump_setup_packet(ureq_t setup)
 {
-    RT_DEBUG_LOG(RT_DEBUG_USB, ("[\n"));
-    RT_DEBUG_LOG(RT_DEBUG_USB, ("  setup_request : 0x%x\n",
+    RT_DEBUG_LOG(RT_DEBUG_USB1, ("[\n"));
+    RT_DEBUG_LOG(RT_DEBUG_USB1, ("  setup_request : 0x%x\n",
                                 setup->request_type));
-    RT_DEBUG_LOG(RT_DEBUG_USB, ("  value         : 0x%x\n", setup->wValue));
-    RT_DEBUG_LOG(RT_DEBUG_USB, ("  length        : 0x%x\n", setup->wLength));
-    RT_DEBUG_LOG(RT_DEBUG_USB, ("  index         : 0x%x\n", setup->wIndex));
-    RT_DEBUG_LOG(RT_DEBUG_USB, ("  request       : 0x%x\n", setup->bRequest));
-    RT_DEBUG_LOG(RT_DEBUG_USB, ("]\n"));
+    RT_DEBUG_LOG(RT_DEBUG_USB1, ("  value         : 0x%x\n", setup->wValue));
+    RT_DEBUG_LOG(RT_DEBUG_USB1, ("  length        : 0x%x\n", setup->wLength));
+    RT_DEBUG_LOG(RT_DEBUG_USB1, ("  index         : 0x%x\n", setup->wIndex));
+    RT_DEBUG_LOG(RT_DEBUG_USB1, ("  request       : 0x%x\n", setup->bRequest));
+    RT_DEBUG_LOG(RT_DEBUG_USB1, ("]\n"));
 
     return RT_EOK;
 }

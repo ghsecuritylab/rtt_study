@@ -58,7 +58,7 @@ void  SysTick_Configuration(void)
 
     cnts = (rt_uint32_t)rcc_clocks.HCLK_Frequency / RT_TICK_PER_SECOND;
     cnts = cnts / 8;
-
+    
     SysTick_Config(cnts);
     SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK_Div8);
 }
