@@ -1811,7 +1811,6 @@ USB_OTG_STS USB_OTG_EPSetStall(USB_OTG_CORE_HANDLE *pdev , USB_OTG_EP *ep)
   USB_OTG_STS status = USB_OTG_OK;
   USB_OTG_DEPCTL_TypeDef  depctl;
   __IO uint32_t *depctl_addr;
-  
   depctl.d32 = 0;
   if (ep->is_in == 1)
   {

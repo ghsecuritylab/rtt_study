@@ -681,7 +681,6 @@ static uint32_t DCD_WriteEmptyTxFifo(USB_OTG_CORE_HANDLE *pdev, uint32_t epnum)
       len = ep->maxpacket;
     }
     len32b = (len + 3) / 4;
-    
     USB_OTG_WritePacket (pdev , ep->xfer_buff, epnum, len);
     
     ep->xfer_buff  += len;

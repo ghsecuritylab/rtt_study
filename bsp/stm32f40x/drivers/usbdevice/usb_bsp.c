@@ -113,6 +113,7 @@ void USB_OTG_BSP_uDelay (const uint32_t usec)
 //msec:要延时的ms数.
 void USB_OTG_BSP_mDelay (const uint32_t msec)
 {  
+    return ;
 	rt_thread_delay(msec/10);
 }
    

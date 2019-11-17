@@ -1136,7 +1136,17 @@ void rt_kputs(const char *str)
     rt_hw_console_output(str);
 #endif
 }
-
+void print_format(char * buff,int len)
+{
+    int i=0;
+    rt_kprintf("\n");
+    for(i;i<len;i++)
+    {
+        rt_kprintf("%02x ",buff[i]);
+        if(i%16 == 0)
+            rt_kprintf("\n");
+    }
+}
 /**
  * This function will print a formatted string on system console
  *

@@ -110,7 +110,14 @@ void HAL_PCDEx_SetConnectionState(USB_OTG_CORE_HANDLE *hpcd, uint8_t state)
 }
 static rt_err_t _ep_set_stall(rt_uint8_t address)
 {
-    DCD_EP_Stall(&_stm_pcd, address);
+    if(address)
+        DCD_EP_Stall(&_stm_pcd, address);
+    else
+    {
+        DCD_EP_Stall(&_stm_pcd , 0x80);
+        DCD_EP_Stall(&_stm_pcd , 0);
+        USB_OTG_EP0_OutStart(&_stm_pcd);  
+    }
     return RT_EOK;
 }
 
@@ -163,6 +170,7 @@ static rt_size_t _ep_read_prepare(rt_uint8_t address, void *buffer, rt_size_t si
 
 static rt_size_t _ep_write(rt_uint8_t address, void *buffer, rt_size_t size)
 {
+    //print_format(buffer,size);
     DCD_EP_Tx(&_stm_pcd, address, buffer, size);
     return size;
 }

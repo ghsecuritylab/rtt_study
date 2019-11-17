@@ -369,7 +369,7 @@ static rt_err_t _ep_cmd_handler(ufunction_t func, rt_size_t size)
  */
 static rt_err_t _cdc_get_line_coding(udevice_t device, ureq_t setup)
 {
-    struct ucdc_line_coding data;
+    static struct  ucdc_line_coding data;
     rt_uint16_t size;
 
     RT_ASSERT(device != RT_NULL);
@@ -382,7 +382,7 @@ static rt_err_t _cdc_get_line_coding(udevice_t device, ureq_t setup)
     data.bDataBits = 8;
     data.bParityType = 0;
     size = setup->wLength > 7 ? 7 : setup->wLength;
-
+    //print_format((u8 *)&data,size);
     rt_usbd_ep0_write(device, (void*)&data, size);
 
     return RT_EOK;

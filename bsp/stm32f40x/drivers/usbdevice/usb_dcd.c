@@ -274,7 +274,7 @@ uint32_t  DCD_EP_Tx ( USB_OTG_CORE_HANDLE *pdev,
   ep->dma_addr = (uint32_t)pbuf;  
   ep->xfer_count = 0;
   ep->xfer_len  = buf_len;
-  
+  //print_format(pbuf,buf_len);
   if ( ep->num == 0 )
   {
     USB_OTG_EP0StartXfer(pdev , ep);
@@ -308,8 +308,9 @@ uint32_t  DCD_EP_Stall (USB_OTG_CORE_HANDLE *pdev, uint8_t   epnum)
   ep->is_stall = 1;
   ep->num   = epnum & 0x7F;
   ep->is_in = ((epnum & 0x80) == 0x80);
-  
+ 
   USB_OTG_EPSetStall(pdev , ep);
+  
   return (0);
 }
 
