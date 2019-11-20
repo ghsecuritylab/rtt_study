@@ -1916,7 +1916,6 @@ int rt_hw_sdcard_init(void)
         rt_uint8_t *sector;
 
         status = SD_GetCardInfo(&SDCardInfo);
-        rt_kprintf("status1=%d\r\n",status);
         if (status != SD_OK) goto __return;
 
         //status = SD_SelectDeselect((u32) (SDCardInfo.RCA << 16));
@@ -1967,7 +1966,7 @@ int rt_hw_sdcard_init(void)
         sdcard_device.user_data = &SDCardInfo;
 
         rt_device_register(&sdcard_device, "sd0",
-                           RT_DEVICE_FLAG_RDWR | RT_DEVICE_FLAG_REMOVABLE | RT_DEVICE_FLAG_STANDALONE);
+                           RT_DEVICE_FLAG_RDWR | RT_DEVICE_FLAG_REMOVABLE /*| RT_DEVICE_FLAG_STANDALONE*/);
 
         return 0;
     }
@@ -2018,7 +2017,7 @@ void test_SD(void)
         rt_thread_delay(100);
 	}
 	show_sdcard_info();	//打印SD卡相关信息
-	while(1)
+	while(0)
 	{
 		if(1)//key==KEY0_PRES)//KEY0按下了
 		{

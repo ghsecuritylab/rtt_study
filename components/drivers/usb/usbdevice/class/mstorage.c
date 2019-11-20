@@ -966,7 +966,7 @@ static rt_err_t _function_enable(ufunction_t func)
 
     if(rt_device_open(data->disk, RT_DEVICE_OFLAG_RDWR) != RT_EOK)
     {
-        rt_kprintf("disk open error\n");
+        rt_kprintf("disk open error=%d\n",rt_device_open(data->disk, RT_DEVICE_OFLAG_RDWR));
         return -RT_ERROR;
     }
     

@@ -28,7 +28,7 @@
 #define VCOM_TX_TIMEOUT      1000
 #endif /*RT_VCOM_TX_TIMEOUT*/
 
-#define CDC_RX_BUFSIZE          128
+#define CDC_RX_BUFSIZE          4096
 #define CDC_MAX_PACKET_SIZE     64
 #define VCOM_DEVICE             "vcom"
 

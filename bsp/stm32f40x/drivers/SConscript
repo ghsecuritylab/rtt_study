@@ -28,9 +28,13 @@ if GetDepend('RT_USING_SDIO'):
 # addw25q16 drivers.
 if GetDepend('RT_USING_W25QXX'):
     src += ['w25qxx.c']
+	
+if GetDepend('RT_USING_USB_DEVICE'):
+	src += Glob(cwd+'/usbdevice/*.c')
 
 CPPPATH = [cwd]
 CPPPATH += [cwd + '/../../../components/drivers/include/drivers/']
+CPPPATH += [cwd + '/usbdevice/inc/']
 
 group = DefineGroup('Drivers', src, depend = [''], CPPPATH = CPPPATH)
 

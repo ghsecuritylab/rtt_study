@@ -30,9 +30,14 @@ static struct ep_id _ep_pool[] =
     {0x3,  USB_EP_ATTR_BULK,        USB_DIR_OUT,    64, ID_UNASSIGNED},
     {0xFF, USB_EP_ATTR_TYPE_MASK,   USB_DIR_MASK,   0,  ID_ASSIGNED  },
 };
-
+static int FS_tick = 0;
+static int service_ok_tick = 0;
+static int count_irq = 0;
+static int irq_tick_total = 0;
 void OTG_FS_IRQHandler(void)
 {
+    FS_tick = rt_tick_get();
+    count_irq++;
     USB_OTG_DisableGlobalInt(&_stm_pcd);
     /* leave interrupt */
     rt_sem_release(_stm_pcd.isr_sem);
@@ -206,7 +211,7 @@ static rt_err_t _init(rt_device_t device)
     
     return RT_EOK;
 }
-
+#define trace_time {int rt_kprintf("tick:d\n",rt_tick_get())};
 static void udc_usbd_isr_service(void *param)
 {
     while (1)
@@ -214,6 +219,10 @@ static void udc_usbd_isr_service(void *param)
         rt_sem_take(_stm_pcd.isr_sem, RT_WAITING_FOREVER);
         
         USBD_OTG_ISR_Handler(&_stm_pcd);
+        service_ok_tick = rt_tick_get();
+        irq_tick_total +=(service_ok_tick - FS_tick);
+        //if(count_irq%2000 == 0)
+            //rt_kprintf("irq:%d,tick:%d,resent:%d,FS:%d,SER:%d\n",count_irq,irq_tick_total/count_irq,service_ok_tick-FS_tick,FS_tick,service_ok_tick);
         USB_OTG_EnableGlobalInt(&_stm_pcd);
     }
 }

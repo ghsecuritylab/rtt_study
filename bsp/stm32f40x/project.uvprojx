@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>RT_USING_ARM_LIBC, USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>.;..\..\include;applications;.;drivers;..\..\components\drivers\include\drivers;Libraries\STM32F4xx_StdPeriph_Driver\inc;Libraries\CMSIS\ST\STM32F4xx\Include;Libraries\CMSIS\Include;packages\at_device-v1.4.0;packages\cJSON-v1.0.2;packages\fastlz-latest;packages\netutils-latest\iperf;packages\netutils-latest\ntp;packages\netutils-latest\telnet;packages\qrcode-latest\inc;..\..\libcpu\arm\common;..\..\libcpu\arm\cortex-m4;..\..\components\dfs\include;..\..\components\dfs\filesystems\devfs;..\..\components\dfs\filesystems\elmfat;..\..\components\drivers\audio;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\drivers\spi;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\drivers\usb\usbdevice;..\..\components\finsh;..\..\components\libc\compilers\armlibc;..\..\components\libc\compilers\common;..\..\components\net\at\include;..\..\components\net\at\at_socket;..\..\components\net\sal_socket\include;..\..\components\net\sal_socket\include\socket;..\..\components\net\sal_socket\impl;..\..\components\net\sal_socket\include\dfs_net;..\..\components\net\sal_socket\include\dfs_net\sys_select;..\..\components\net\sal_socket\include\socket\sys_socket;..\..\components\utilities\ymodem;.\drivers\usb;.\drivers\usbdevice\inc</IncludePath>
+              <IncludePath>.;..\..\include;applications;.;drivers;..\..\components\drivers\include\drivers;drivers\usbdevice\inc;Libraries\STM32F4xx_StdPeriph_Driver\inc;Libraries\CMSIS\ST\STM32F4xx\Include;Libraries\CMSIS\Include;packages\at_device-v1.4.0;packages\cJSON-v1.0.2;packages\fastlz-latest;packages\netutils-latest\iperf;packages\netutils-latest\ntp;packages\netutils-latest\telnet;packages\qrcode-latest\inc;..\..\libcpu\arm\common;..\..\libcpu\arm\cortex-m4;..\..\components\dfs\include;..\..\components\dfs\filesystems\devfs;..\..\components\dfs\filesystems\elmfat;..\..\components\drivers\audio;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\drivers\spi;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\drivers\usb\usbdevice;..\..\components\finsh;..\..\components\libc\compilers\armlibc;..\..\components\libc\compilers\common;..\..\components\net\at\include;..\..\components\net\at\at_socket;..\..\components\net\sal_socket\include;..\..\components\net\sal_socket\include\socket;..\..\components\net\sal_socket\impl;..\..\components\net\sal_socket\include\dfs_net;..\..\components\net\sal_socket\include\dfs_net\sys_select;..\..\components\net\sal_socket\include\socket\sys_socket;..\..\components\utilities\ymodem</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -521,6 +521,31 @@
               <FileName>w25qxx.c</FileName>
               <FileType>1</FileType>
               <FilePath>drivers\w25qxx.c</FilePath>
+            </File>
+            <File>
+              <FileName>drv_usbd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\usbdevice\drv_usbd.c</FilePath>
+            </File>
+            <File>
+              <FileName>usb_bsp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\usbdevice\usb_bsp.c</FilePath>
+            </File>
+            <File>
+              <FileName>usb_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\usbdevice\usb_core.c</FilePath>
+            </File>
+            <File>
+              <FileName>usb_dcd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\usbdevice\usb_dcd.c</FilePath>
+            </File>
+            <File>
+              <FileName>usb_dcd_int.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\usbdevice\usb_dcd_int.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1042,34 +1067,9 @@
               <FilePath>..\..\components\drivers\usb\usbdevice\core\usbdevice.c</FilePath>
             </File>
             <File>
-              <FileName>cdc_vcom.c</FileName>
+              <FileName>mstorage.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\components\drivers\usb\usbdevice\class\cdc_vcom.c</FilePath>
-            </File>
-            <File>
-              <FileName>drv_usbd.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\drivers\usbdevice\drv_usbd.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_bsp.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\drivers\usbdevice\usb_bsp.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_core.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\drivers\usbdevice\usb_core.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_dcd.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\drivers\usbdevice\usb_dcd.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_dcd_int.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\drivers\usbdevice\usb_dcd_int.c</FilePath>
+              <FilePath>..\..\components\drivers\usb\usbdevice\class\mstorage.c</FilePath>
             </File>
           </Files>
         </Group>
