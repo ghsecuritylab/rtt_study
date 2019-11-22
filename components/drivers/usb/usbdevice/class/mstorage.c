@@ -823,7 +823,7 @@ static rt_err_t _ep_out_handler(ufunction_t func, rt_size_t size)
 
         RT_DEBUG_LOG(RT_DEBUG_USB, ("ep_out reside %d\n", data->csw_response.data_reside));
         
-        cmd = _find_cbw_command(cbw->cb[0]);
+        cmd = _find_cbw_command(cbw->cb[0]);//查找sisc协议命令
         if(cmd == RT_NULL)
         {
             rt_kprintf("can't find cbw command\n");
@@ -910,7 +910,7 @@ static rt_err_t _interface_handler(ufunction_t func, ureq_t setup)
     switch(setup->bRequest)
     {
     case USBREQ_GET_MAX_LUN:        
-        
+        //获取有几个逻辑分区，如果是flash+sd卡则是两个逻辑分区，lun修改为1，从0开始
         RT_DEBUG_LOG(RT_DEBUG_USB, ("USBREQ_GET_MAX_LUN\n"));
         
         if(setup->wValue || setup->wLength != 1)
@@ -966,7 +966,7 @@ static rt_err_t _function_enable(ufunction_t func)
 
     if(rt_device_open(data->disk, RT_DEVICE_OFLAG_RDWR) != RT_EOK)
     {
-        rt_kprintf("disk open error=%d\n",rt_device_open(data->disk, RT_DEVICE_OFLAG_RDWR));
+        rt_kprintf("disk open error\n");
         return -RT_ERROR;
     }
     

@@ -382,7 +382,7 @@ static rt_err_t _cdc_get_line_coding(udevice_t device, ureq_t setup)
     data.bDataBits = 8;
     data.bParityType = 0;
     size = setup->wLength > 7 ? 7 : setup->wLength;
-    //print_format((u8 *)&data,size);
+
     rt_usbd_ep0_write(device, (void*)&data, size);
 
     return RT_EOK;
@@ -582,14 +582,14 @@ ufunction_t rt_usbd_function_cdc_create(udevice_t device)
     rt_usbd_device_set_string(device, _ustring);
     
     /* create a cdc function */
-    func = rt_usbd_function_new(device, &dev_desc, &ops);
+    func = rt_usbd_function_new(device, &dev_desc, &ops);//创建一个功能函数控制块
     //not support HS
     //rt_usbd_device_set_qualifier(device, &dev_qualifier);
     
     /* allocate memory for cdc vcom data */
     data = (struct vcom*)rt_malloc(sizeof(struct vcom));
     rt_memset(data, 0, sizeof(struct vcom));
-    func->user_data = (void*)data;
+    func->user_data = (void*)data;//cdc串口操作结构体
     
     /* initilize vcom */
     rt_usb_vcom_init(func);

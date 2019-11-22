@@ -50,13 +50,13 @@ typedef rt_uint16_t             Elf32_Half;    /* Unsigned medium integer */
                                  (ehdr).e_ident[EI_MAG3] == ELFMAG3)
 
 #define ET_NONE                 0              /* No file type */
-#define ET_REL                  1              /* Relocatable file */
-#define ET_EXEC                 2              /* Executable file */
-#define ET_DYN                  3              /* Shared object file */
+#define ET_REL                  1              /* Relocatable file *///可重定位文件
+#define ET_EXEC                 2              /* Executable file *///可执行文件
+#define ET_DYN                  3              /* Shared object file *///动态文件
 #define ET_CORE                 4              /* Core file */
 
 /* ELF Header */
-typedef struct elfhdr
+typedef struct elfhdr//elf文件头部结构体
 {
     unsigned char e_ident[EI_NIDENT];          /* ELF Identification */
     Elf32_Half    e_type;                      /* object file type */
@@ -76,7 +76,7 @@ typedef struct elfhdr
 } Elf32_Ehdr;
 
 /* Section Header */
-typedef struct
+typedef struct    //section节头部结构体
 {
     Elf32_Word sh_name;                        /* name - index into section header
                                                   string table section */
@@ -91,7 +91,7 @@ typedef struct
     Elf32_Word sh_entsize;                     /* section entry size */
 } Elf32_Shdr;
 
-/* Section names */
+/* Section names 文件中节的名字*/
 #define ELF_BSS                 ".bss"         /* uninitialized data */
 #define ELF_DATA                ".data"        /* initialized data */
 #define ELF_DEBUG               ".debug"       /* debug */
@@ -118,12 +118,12 @@ typedef struct
 /* Symbol Table Entry */
 typedef struct elf32_sym
 {
-    Elf32_Word    st_name;                     /* name - index into string table */
-    Elf32_Addr    st_value;                    /* symbol value */
-    Elf32_Word    st_size;                     /* symbol size */
+    Elf32_Word    st_name;                     /* name - index into string table函数名字索引*/
+    Elf32_Addr    st_value;                    /* symbol value 函数符号地址*/
+    Elf32_Word    st_size;                     /* symbol size 函数符号的大小*/
     unsigned char st_info;                     /* type and binding */
     unsigned char st_other;                    /* 0 - no defined meaning */
-    Elf32_Half    st_shndx;                    /* section header index */
+    Elf32_Half    st_shndx;                    /* section header index该函数符号在节中的索引 */
 } Elf32_Sym;
 
 #define STB_LOCAL               0              /* BIND */

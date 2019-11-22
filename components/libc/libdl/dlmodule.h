@@ -13,7 +13,7 @@
 
 #include <rtthread.h>
 
-#define RT_DLMODULE_STAT_INIT       0x00
+#define RT_DLMODULE_STAT_INIT       0x00//模块状态
 #define RT_DLMODULE_STAT_RUNNING    0x01
 #define RT_DLMODULE_STAT_CLOSING    0x02
 #define RT_DLMODULE_STAT_CLOSED     0x03
@@ -21,13 +21,13 @@
 struct rt_dlmodule;
 typedef void* rt_addr_t;
 
-typedef void (*rt_dlmodule_init_func_t)(struct rt_dlmodule *module);
-typedef void (*rt_dlmodule_cleanup_func_t)(struct rt_dlmodule *module);
-typedef int  (*rt_dlmodule_entry_func_t)(int argc, char** argv);
+typedef void (*rt_dlmodule_init_func_t)(struct rt_dlmodule *module);//模块初始化
+typedef void (*rt_dlmodule_cleanup_func_t)(struct rt_dlmodule *module);//模块反初始化
+typedef int  (*rt_dlmodule_entry_func_t)(int argc, char** argv);//模块入口函数类型
 
 struct rt_dlmodule
 {
-    struct rt_object parent;
+    struct rt_object parent;//模块的内核对象成员
     rt_list_t object_list;  /* objects inside this module */
 
     rt_uint8_t stat;        /* status of module */
@@ -55,8 +55,8 @@ struct rt_dlmodule
 
     rt_uint16_t nref;       /* reference count */
 
-    rt_uint16_t nsym;       /* number of symbols in the module */
-    struct rt_module_symtab *symtab;    /* module symbol table */
+    rt_uint16_t nsym;       /* number of symbols in the module *///模块中的函数符号数量
+    struct rt_module_symtab *symtab;    /* module symbol table *///函数符号链表，函数名指针，函数地址指针。
 };
 
 struct rt_dlmodule *dlmodule_create(void);

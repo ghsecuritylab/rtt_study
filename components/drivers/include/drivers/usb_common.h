@@ -274,89 +274,89 @@ typedef struct usb_descriptor* udesc_t;
 
 struct udevice_descriptor
 {
-    rt_uint8_t bLength;
-    rt_uint8_t type;
-    rt_uint16_t bcdUSB;
-    rt_uint8_t bDeviceClass;
-    rt_uint8_t bDeviceSubClass;
-    rt_uint8_t bDeviceProtocol;
-    rt_uint8_t bMaxPacketSize0;
-    rt_uint16_t idVendor;
-    rt_uint16_t idProduct;
-    rt_uint16_t bcdDevice;
-    rt_uint8_t iManufacturer;
-    rt_uint8_t iProduct;
-    rt_uint8_t iSerialNumber;
-    rt_uint8_t bNumConfigurations;
+    rt_uint8_t bLength;//描述符长度，此处为0x12
+    rt_uint8_t type;//描述符类型，0x1
+    rt_uint16_t bcdUSB;//该设备支持的USB协议版本，1.0/1.1/2.0/3.0
+    rt_uint8_t bDeviceClass;//设备类
+    rt_uint8_t bDeviceSubClass;//设备子类
+    rt_uint8_t bDeviceProtocol;//设备协议
+    rt_uint8_t bMaxPacketSize0;//0端点支持的最大包长度
+    rt_uint16_t idVendor;//VID，厂商提供
+    rt_uint16_t idProduct;//PID，产品ID
+    rt_uint16_t bcdDevice;//设备出厂编号
+    rt_uint8_t iManufacturer;//厂商字符串的序号索引
+    rt_uint8_t iProduct;//产品字符串的索引
+    rt_uint8_t iSerialNumber;//描述设备序列号的字符串索引
+    rt_uint8_t bNumConfigurations;//该设备可能的配置数量
 };
 typedef struct udevice_descriptor* udev_desc_t;
 
 struct uconfig_descriptor
 {
-    rt_uint8_t bLength;
-    rt_uint8_t type;
-    rt_uint16_t wTotalLength;
-    rt_uint8_t bNumInterfaces;
-    rt_uint8_t bConfigurationValue;
-    rt_uint8_t iConfiguration;
-    rt_uint8_t bmAttributes;
-    rt_uint8_t MaxPower;
-    rt_uint8_t data[256];
+    rt_uint8_t bLength;//描述符头部长度
+    rt_uint8_t type;//描述符类型0x2
+    rt_uint16_t wTotalLength;//配置描述符总长度，包含接口描述符，端点描述符等的数据总长度
+    rt_uint8_t bNumInterfaces;//该配置总共有多少接口
+    rt_uint8_t bConfigurationValue;//set_configuration命令所设置的参数值
+    rt_uint8_t iConfiguration;//描述该配置的字符串的索引号
+    rt_uint8_t bmAttributes;//供电模式选择
+    rt_uint8_t MaxPower;//设备从总线获取到的最大电流值
+    rt_uint8_t data[256];//供接口，端点描述符的储存空间
 };
 typedef struct uconfig_descriptor* ucfg_desc_t;
 
 struct uinterface_descriptor
 {
-    rt_uint8_t bLength;
-    rt_uint8_t type;
-    rt_uint8_t bInterfaceNumber;
-    rt_uint8_t bAlternateSetting;
-    rt_uint8_t bNumEndpoints;
-    rt_uint8_t bInterfaceClass;
-    rt_uint8_t bInterfaceSubClass;
-    rt_uint8_t bInterfaceProtocol;
-    rt_uint8_t iInterface;
+    rt_uint8_t bLength;//描述符长度，固定
+    rt_uint8_t type;//描述符类型，固定
+    rt_uint8_t bInterfaceNumber;//接口在该配置中所有的接口中的排序号
+    rt_uint8_t bAlternateSetting;//备用设置使用，暂时未知作用
+    rt_uint8_t bNumEndpoints;//该接口中的端点数量
+    rt_uint8_t bInterfaceClass;//该接口所实现的设备类，设备中为0时使用接口中的类
+    rt_uint8_t bInterfaceSubClass;//设备子类
+    rt_uint8_t bInterfaceProtocol;//设备协议
+    rt_uint8_t iInterface;//描述该接口的字符串的索引号
 };
 typedef struct uinterface_descriptor* uintf_desc_t;
 
 /* Interface Association Descriptor (IAD) */
 struct uiad_descriptor
 {
-    rt_uint8_t bLength;
-    rt_uint8_t bDescriptorType;
-    rt_uint8_t bFirstInterface;
-    rt_uint8_t bInterfaceCount;
-    rt_uint8_t bFunctionClass;
-    rt_uint8_t bFunctionSubClass;
-    rt_uint8_t bFunctionProtocol;
-    rt_uint8_t iFunction;
+    rt_uint8_t bLength;//联合描述符的长度
+    rt_uint8_t bDescriptorType;//描述符类型，固定
+    rt_uint8_t bFirstInterface;//接口类中的序号，一个序号表示一个功能类
+    rt_uint8_t bInterfaceCount;//组合设备中总共实现的功能类数量
+    rt_uint8_t bFunctionClass;//当前功能类的设备类型
+    rt_uint8_t bFunctionSubClass;//当前IAD中的设备子类
+    rt_uint8_t bFunctionProtocol;//当前设备协议
+    rt_uint8_t iFunction;//描述该功能类的字符串的索引
 };
 typedef struct uiad_descriptor* uiad_desc_t;
 
 struct uendpoint_descriptor
 {
-    rt_uint8_t  bLength;
-    rt_uint8_t  type;
-    rt_uint8_t  bEndpointAddress;
-    rt_uint8_t  bmAttributes;
-    rt_uint16_t wMaxPacketSize;
-    rt_uint8_t  bInterval;
+    rt_uint8_t  bLength;//端点描述符的长度
+    rt_uint8_t  type;//端点描述符类型
+    rt_uint8_t  bEndpointAddress;//该端点地址，有IN、OUT之分，IN最高位为1，OUT为0
+    rt_uint8_t  bmAttributes;//该端点的属性，中断/批量/控制/同步等
+    rt_uint16_t wMaxPacketSize;//该端点支持的最大数据包长度
+    rt_uint8_t  bInterval;//当该端点为中断传输端点时，告诉主机轮询的时间间隔，其他传输类型无用
 };
 typedef struct uendpoint_descriptor* uep_desc_t;
 
 struct ustring_descriptor
 {
-    rt_uint8_t bLength;
-    rt_uint8_t type;
-    rt_uint8_t String[64];
+    rt_uint8_t bLength;//字符串描述符
+    rt_uint8_t type;//描述符类型
+    rt_uint8_t String[64];//字符串数据储存区
 };
 typedef struct ustring_descriptor* ustr_desc_t;
 
 struct uhub_descriptor
 {
-    rt_uint8_t length;
-    rt_uint8_t type;
-    rt_uint8_t num_ports;
+    rt_uint8_t length;//HUB描述符
+    rt_uint8_t type;//描述符类型
+    rt_uint8_t num_ports;//该hub有多少端口
     rt_uint16_t characteristics;
     rt_uint8_t pwron_to_good;        /* power on to power good */
     rt_uint8_t current;

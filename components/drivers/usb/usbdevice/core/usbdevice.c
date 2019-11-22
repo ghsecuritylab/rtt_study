@@ -112,9 +112,9 @@ rt_err_t rt_usb_device_init(void)
     rt_usbd_core_init();
 
     /* create a device object */
-    udevice = rt_usbd_device_new();
+    udevice = rt_usbd_device_new();//逻辑设备new一个实例，面向对象思想
 
-    udc = rt_device_find(USB_DEVICE_CONTROLLER_NAME);
+    udc = rt_device_find(USB_DEVICE_CONTROLLER_NAME);//物理设备
     if(udc == RT_NULL)
     {
         rt_kprintf("can't find usb device controller %s\n", USB_DEVICE_CONTROLLER_NAME);
@@ -122,39 +122,42 @@ rt_err_t rt_usb_device_init(void)
     }
 
     /* set usb controller driver to the device */
-    rt_usbd_device_set_controller(udevice, (udcd_t)udc);
+    rt_usbd_device_set_controller(udevice, (udcd_t)udc);//逻辑设备和物理设备相关联
 
     /* create a configuration object */
-    cfg = rt_usbd_config_new();
+    cfg = rt_usbd_config_new();//new一个配置对象，面向对象的编程思想
 
-    rt_usbd_device_set_os_comp_id_desc(udevice, &usb_comp_id_desc);
+    rt_usbd_device_set_os_comp_id_desc(udevice, &usb_comp_id_desc);//与操作系统相关的描述符
 
     for(i = class_list.next; i!= &class_list; i = i->next)
     {
         /* get a class creater */
         udclass = rt_list_entry(i, struct udclass, list);
         /* create a function object */
-        func = udclass->rt_usbd_function_create(udevice);
+        func = udclass->rt_usbd_function_create(udevice);//一个功能函数就相当于一个类
+        //功能创造函数就返回一个完整的功能函数，里面包含了该功能的接口和端点等
         /* add the function to the configuration */
-        rt_usbd_config_add_function(cfg, func);
+        rt_usbd_config_add_function(cfg, func);//将功能函数添加到配置链表里面
     }
     /* set device descriptor to the device */
 #ifdef RT_USB_DEVICE_COMPOSITE
+    //如果定义了组合设备，则使用组合设备的描述符
     rt_usbd_device_set_descriptor(udevice, &compsit_desc);
     rt_usbd_device_set_string(udevice, ustring);
     if(udevice->dcd->device_is_hs)
     {
-        rt_usbd_device_set_qualifier(udevice, &dev_qualifier);
+        rt_usbd_device_set_qualifier(udevice, &dev_qualifier);//高速设备需要限定描述符
     }
 #else
+    //否则使用功能函数里面自带的设备描述符
     rt_usbd_device_set_descriptor(udevice, func->dev_desc);
 #endif
 
     /* add the configuration to the device */
-    rt_usbd_device_add_config(udevice, cfg);
+    rt_usbd_device_add_config(udevice, cfg);//将配置关联到设备
 
     /* initialize usb device controller */
-    rt_device_init(udc);
+    rt_device_init(udc);//初始化物理USB模块控制器
 
     /* set default configuration to 1 */
     rt_usbd_set_config(udevice, 1);

@@ -13,7 +13,7 @@
 
 #include "dlmodule.h"
 
-void* dlsym(void *handle, const char* symbol)
+void* dlsym(void *handle, const char* symbol)//从动态库中查找某个函数符号，并返回函数地址
 {
     int i;
     struct rt_dlmodule *module;

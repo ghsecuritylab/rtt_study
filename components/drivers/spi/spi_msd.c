@@ -1186,8 +1186,8 @@ static rt_err_t rt_msd_init(rt_device_t dev)
     } /* config spi */
 
 _exit:
-    rt_spi_release(msd->spi_device);
-    rt_mutex_release(&(msd->spi_device->bus->lock));
+    rt_spi_release(msd->spi_device);//释放片选，不选中
+    rt_mutex_release(&(msd->spi_device->bus->lock));//释放总线
     return result;
 }
 

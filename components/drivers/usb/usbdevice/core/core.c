@@ -1789,7 +1789,7 @@ rt_err_t rt_usbd_clear_feature(udevice_t device, rt_uint16_t value, rt_uint16_t 
 rt_err_t rt_usbd_ep0_set_stall(udevice_t device)
 {
     RT_ASSERT(device != RT_NULL);
-    rt_kprintf("ep stall\n");
+    
     return dcd_ep_set_stall(device->dcd, 0);
 }
 
@@ -2065,7 +2065,7 @@ rt_size_t rt_usbd_ep0_write(udevice_t device, void *buffer, rt_size_t size)
         sent_size = size;
     }
     device->dcd->stage = STAGE_DIN;
-    //print_format(ep0->request.buffer,sent_size);
+
     return dcd_ep_write(device->dcd, EP0_IN_ADDR, ep0->request.buffer, sent_size);
 }
 

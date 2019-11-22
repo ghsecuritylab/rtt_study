@@ -188,9 +188,9 @@ typedef struct uconfig* uconfig_t;
 struct udevice
 {
     rt_list_t list;
-    struct udevice_descriptor dev_desc;
+    struct udevice_descriptor dev_desc;//设备描述符
 
-    struct usb_qualifier_descriptor * dev_qualifier;
+    struct usb_qualifier_descriptor * dev_qualifier;//限定描述符
     usb_os_comp_id_desc_t    os_comp_id_desc;
     const char** str;
 

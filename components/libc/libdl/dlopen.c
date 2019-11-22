@@ -16,7 +16,7 @@
 
 #define MODULE_ROOT_DIR     "/modules"
 
-void* dlopen(const char *filename, int flags)
+void* dlopen(const char *filename, int flags)//在文件系统中打开动态库，并加载到ram中
 {
     struct rt_dlmodule *module;
     char *fullpath;
