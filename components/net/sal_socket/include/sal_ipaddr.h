@@ -7,8 +7,10 @@
  * Date           Author       Notes
  * 2018-05-18     ChenYong     First version
  */
+
 #ifndef SAL_IPADDR_H__
 #define SAL_IPADDR_H__
+#define LWIP_HDR_IP_ADDR_H
 
 #include "sal_type.h"
 

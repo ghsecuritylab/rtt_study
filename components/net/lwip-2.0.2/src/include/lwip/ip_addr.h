@@ -51,6 +51,7 @@ extern "C" {
  * IP address types for use in ip_addr_t.type member.
  * @see tcp_new_ip_type(), udp_new_ip_type(), raw_new_ip_type().
  */
+ #if 1
 enum lwip_ip_addr_type {
   /** IPv4 */
   IPADDR_TYPE_V4 =   0U,
@@ -59,7 +60,7 @@ enum lwip_ip_addr_type {
   /** IPv4+IPv6 ("dual-stack") */
   IPADDR_TYPE_ANY = 46U
 };
-
+#endif
 #if LWIP_IPV4 && LWIP_IPV6
 /**
  * @ingroup ipaddr

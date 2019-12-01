@@ -56,7 +56,7 @@
 
 #define RT_USING_COMPONENTS_INIT
 #define RT_USING_USER_MAIN
-#define RT_MAIN_THREAD_STACK_SIZE 2048*2
+#define RT_MAIN_THREAD_STACK_SIZE 2048
 #define RT_MAIN_THREAD_PRIORITY 10
 
 /* C++ features */
@@ -121,9 +121,19 @@
 #define USB_VENDOR_ID 0x0FFE
 #define USB_PRODUCT_ID 0x0001
 #define RT_USB_DEVICE_COMPOSITE
+#define RT_USB_DEVICE_CDC
 #define RT_USB_DEVICE_NONE
-#define RT_USB_DEVICE_MSTORAGE
-#define RT_USB_MSTORAGE_DISK_NAME "sd0"
+#define RT_USB_DEVICE_HID
+#define RT_VCOM_TASK_STK_SIZE 512
+#define RT_VCOM_SERNO "32021919830108"
+#define RT_VCOM_SER_LEN 14
+#define RT_VCOM_TX_TIMEOUT 1000
+#define RT_USB_DEVICE_HID_KEYBOARD
+#define RT_USB_DEVICE_HID_KEYBOARD_NUMBER 1
+#define RT_USB_DEVICE_HID_GENERAL
+#define RT_USB_DEVICE_HID_GENERAL_OUT_REPORT_LENGTH 63
+#define RT_USB_DEVICE_HID_GENERAL_IN_REPORT_LENGTH 63
+#define RT_USB_DEVICE_HID_MEDIA
 
 /* POSIX layer and C standard library */
 
@@ -135,10 +145,6 @@
 /* Socket abstraction layer */
 
 #define RT_USING_SAL
-
-/* protocol stack implement */
-
-#define SAL_USING_AT
 #define SAL_USING_POSIX
 #define SAL_PROTO_FAMILIES_NUM 4
 
@@ -150,13 +156,6 @@
 
 /* AT commands */
 
-#define RT_USING_AT
-#define AT_DEBUG
-#define AT_USING_CLIENT
-#define AT_CLIENT_NUM_MAX 1
-#define AT_USING_SOCKET
-#define AT_USING_CLI
-#define AT_SW_VERSION_NUM 0x10200
 
 /* VBUS(Virtual Software BUS) */
 
@@ -172,8 +171,6 @@
 
 /* IoT - internet of things */
 
-#define PKG_USING_CJSON
-#define PKG_USING_CJSON_V102
 
 /* Wi-Fi */
 
@@ -189,16 +186,6 @@
 #define NETUTILS_NTP_HOSTNAME "cn.ntp.org.cn"
 #define PKG_NETUTILS_TELNET
 #define PKG_USING_NETUTILS_LATEST_VERSION
-#define PKG_USING_AT_DEVICE
-#define PKG_AT_INIT_BY_THREAD
-#define AT_DEVICE_ESP8266
-#define AT_DEVICE_SOCKETS_NUM 5
-#define AT_DEVICE_NAME "uart2"
-#define AT_DEVICE_RECV_BUFF_LEN 512
-#define AT_DEVICE_WIFI_SSID "wifikiller"
-#define AT_DEVICE_WIFI_PASSWORD "12345678"
-#define PKG_USING_AT_DEVICE_V140
-#define PKG_AT_DEVICE_VER_NUM 0x10400
 
 /* IoT Cloud */
 
@@ -214,8 +201,6 @@
 
 /* tools packages */
 
-#define PKG_USING_QRCODE
-#define PKG_USING_QRCODE_LATEST_VERSION
 
 /* system packages */
 
