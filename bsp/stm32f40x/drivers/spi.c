@@ -419,8 +419,8 @@ static void rt_hw_spi_init(void)
         GPIO_InitTypeDef GPIO_InitStructure;
 
         /* Enable GPIO clock */
-        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);//使能GPIOA时钟
-
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);//使能GPIOB时钟
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);//使能GPIOG时钟  CS脚
         GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3|GPIO_Pin_4|GPIO_Pin_5;//PB3~5复用功能输出	
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;//复用功能
         GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
@@ -452,8 +452,8 @@ static void rt_hw_spi_init(void)
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
 
         /* spi21: PG10 */
-        spi_cs.GPIOx = GPIOB;//w25qxx的片选信号
-        spi_cs.GPIO_Pin = GPIO_Pin_0;
+        spi_cs.GPIOx = GPIOG;//w25qxx的片选信号
+        spi_cs.GPIO_Pin = GPIO_Pin_8;
 
         GPIO_InitStructure.GPIO_Pin = spi_cs.GPIO_Pin;
         

@@ -335,7 +335,7 @@ int dfs_mount(const char   *device_name,
         /* close device */
         if (dev_id != NULL)
             rt_device_close(fs->dev_id);
-        rt_kprintf("ret==%d\r\n",ret);
+        //rt_kprintf("ret==%d\r\n",ret);
         /* mount failed */
         dfs_lock();
         /* clear filesystem table entry */

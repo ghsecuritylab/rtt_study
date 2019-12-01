@@ -42,9 +42,9 @@ int main(void)
     rt_flash_device = rt_device_find("w25qxx");
     if(rt_flash_device == NULL)
         rt_kprintf("没找到设备\r\n");
-    test_SD();
+    //test_SD();
     /* user app entry */
-    ret = rt_flash_device->open(rt_flash_device,0);
+    //ret = rt_flash_device->open(rt_flash_device,0);
     #if 0
     while(0)
     {

@@ -189,7 +189,7 @@ void main_thread_entry(void *parameter)
 
         /* Filesystem Initialization *///add by xiaqiyun 
 #if defined(RT_USING_DFS) && defined(RT_USING_DFS_ELMFAT)
-#if 1
+#if 0
     /* mount sd card fat partition 1 as root directory */
     if ((dfs_mount("sd0", "/", "elm", 0, 0) == 0))
     {

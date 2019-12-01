@@ -88,7 +88,7 @@
 
 /* elm-chan's FatFs, Generic FAT Filesystem Module */
 
-#define RT_DFS_ELM_CODE_PAGE 936
+#define RT_DFS_ELM_CODE_PAGE 437
 #define RT_DFS_ELM_WORD_ACCESS
 #define RT_DFS_ELM_USE_LFN_3
 #define RT_DFS_ELM_USE_LFN 3
@@ -97,6 +97,10 @@
 #define RT_DFS_ELM_MAX_SECTOR_SIZE 512
 #define RT_DFS_ELM_REENTRANT
 #define RT_USING_DFS_DEVFS
+#define RT_USING_DFS_ROMFS
+#define RT_USING_DFS_UFFS
+#define RT_UFFS_ECC_MODE_0
+#define RT_UFFS_ECC_MODE 0
 
 /* Device Drivers */
 
@@ -105,6 +109,8 @@
 #define RT_USING_SERIAL
 #define RT_SERIAL_USING_DMA
 #define RT_USING_PIN
+#define RT_USING_MTD_NOR
+#define RT_USING_MTD_NAND
 #define RT_USING_SPI
 #define RT_USING_SPI_MSD
 #define RT_USING_W25QXX
@@ -116,24 +122,6 @@
 
 /* Using USB */
 
-#define RT_USING_USB_DEVICE
-#define RT_USBD_THREAD_STACK_SZ 4096
-#define USB_VENDOR_ID 0x0FFE
-#define USB_PRODUCT_ID 0x0001
-#define RT_USB_DEVICE_COMPOSITE
-#define RT_USB_DEVICE_CDC
-#define RT_USB_DEVICE_NONE
-#define RT_USB_DEVICE_HID
-#define RT_VCOM_TASK_STK_SIZE 512
-#define RT_VCOM_SERNO "32021919830108"
-#define RT_VCOM_SER_LEN 14
-#define RT_VCOM_TX_TIMEOUT 1000
-#define RT_USB_DEVICE_HID_KEYBOARD
-#define RT_USB_DEVICE_HID_KEYBOARD_NUMBER 1
-#define RT_USB_DEVICE_HID_GENERAL
-#define RT_USB_DEVICE_HID_GENERAL_OUT_REPORT_LENGTH 63
-#define RT_USB_DEVICE_HID_GENERAL_IN_REPORT_LENGTH 63
-#define RT_USB_DEVICE_HID_MEDIA
 
 /* POSIX layer and C standard library */
 
@@ -145,11 +133,54 @@
 /* Socket abstraction layer */
 
 #define RT_USING_SAL
+
+/* protocol stack implement */
+
+#define SAL_USING_LWIP
 #define SAL_USING_POSIX
 #define SAL_PROTO_FAMILIES_NUM 4
 
 /* light weight TCP/IP stack */
 
+#define RT_USING_LWIP
+#define RT_USING_LWIP210
+#define RT_LWIP_IGMP
+#define RT_LWIP_ICMP
+#define RT_LWIP_DNS
+//#define RT_LWIP_DHCP
+#define IP_SOF_BROADCAST 1
+#define IP_SOF_BROADCAST_RECV 1
+
+/* Static IPv4 Address */
+
+#define RT_LWIP_IPADDR "192.168.1.30"
+#define RT_LWIP_GWADDR "192.168.1.1"
+#define RT_LWIP_MSKADDR "255.255.255.0"
+#define RT_LWIP_UDP
+#define RT_LWIP_TCP
+#define RT_LWIP_RAW
+#define RT_MEMP_NUM_NETCONN 8
+#define RT_LWIP_PBUF_NUM 16
+#define RT_LWIP_RAW_PCB_NUM 4
+#define RT_LWIP_UDP_PCB_NUM 4
+#define RT_LWIP_TCP_PCB_NUM 4
+#define RT_LWIP_TCP_SEG_NUM 40
+#define RT_LWIP_TCP_SND_BUF 8196
+#define RT_LWIP_TCP_WND 8196
+#define RT_LWIP_TCPTHREAD_PRIORITY 10
+#define RT_LWIP_TCPTHREAD_MBOX_SIZE 8
+#define RT_LWIP_TCPTHREAD_STACKSIZE 1024
+#define RT_LWIP_ETHTHREAD_PRIORITY 12
+#define RT_LWIP_ETHTHREAD_STACKSIZE 1024
+#define RT_LWIP_ETHTHREAD_MBOX_SIZE 8
+#define LWIP_NETIF_STATUS_CALLBACK 1
+#define SO_REUSE 1
+#define LWIP_SO_RCVTIMEO 1
+#define LWIP_SO_SNDTIMEO 1
+#define LWIP_SO_RCVBUF 1
+#define LWIP_NETIF_LOOPBACK 0
+#define RT_LWIP_DEBUG
+#define RT_LWIP_NETIF_DEBUG
 
 /* Modbus master and slave stack */
 
@@ -180,11 +211,14 @@
 /* Wiced WiFi */
 
 #define PKG_USING_NETUTILS
+#define PKG_NETUTILS_PING
+#define PKG_NETUTILS_TFTP
+#define NETUTILS_TFTP_PORT 69
 #define PKG_NETUTILS_IPERF
-#define PKG_NETUTILS_NTP
-#define NETUTILS_NTP_TIMEZONE 8
-#define NETUTILS_NTP_HOSTNAME "cn.ntp.org.cn"
+#define PKG_NETUTILS_NETIO
 #define PKG_NETUTILS_TELNET
+#define PKG_NETUTILS_TCPDUMP
+#define PKG_NETUTILS_TCPDUMP_DBG
 #define PKG_USING_NETUTILS_LATEST_VERSION
 
 /* IoT Cloud */
@@ -201,6 +235,11 @@
 
 /* tools packages */
 
+#define PKG_USING_CMBACKTRACE
+#define PKG_CMBACKTRACE_PLATFORM_M4
+#define PKG_CMBACKTRACE_DUMP_STACK
+#define PKG_CMBACKTRACE_PRINT_CHINESE
+#define PKG_USING_CMBACKTRACE_LATEST_VERSION
 
 /* system packages */
 
@@ -212,6 +251,8 @@
 
 /* miscellaneous packages */
 
+#define PKG_USING_OPTPARSE
+#define PKG_USING_OPTPARSE_V100
 #define PKG_USING_FASTLZ
 #define PKG_USING_FASTLZ_LATEST_VERSION
 

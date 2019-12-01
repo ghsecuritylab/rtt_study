@@ -59,7 +59,7 @@
 #include "netif/ethernetif.h"
 
 #include "lwip/inet.h"
-
+#define NETIF_DEBUG 1
 #if LWIP_IPV6
 #include "lwip/ethip6.h"
 #endif /* LWIP_IPV6 */
@@ -366,32 +366,34 @@ static void eth_rx_thread_entry(void* parameter)
         if (rt_mb_recv(&eth_rx_thread_mb, (rt_uint32_t*)&device, RT_WAITING_FOREVER) == RT_EOK)
         {
             struct pbuf *p;
-
+            rt_kprintf("1\n");
             /* check link status */
             if (device->link_changed)
             {
                 int status;
                 rt_uint32_t level;
-
+                rt_kprintf("2\n");
                 level = rt_hw_interrupt_disable();
                 status = device->link_status;
                 device->link_changed = 0x00;
                 rt_hw_interrupt_enable(level);
-
+                rt_kprintf("3\n");
                 if (status)
                     netifapi_netif_set_link_up(device->netif);
                 else
                     netifapi_netif_set_link_down(device->netif);
+                rt_kprintf("4\n");
             }
 
             /* receive all of buffer */
             while (1)
             {
                 if(device->eth_rx == RT_NULL) break;
-                
+                rt_kprintf("5\n");
                 p = device->eth_rx(&(device->parent));
+                rt_kprintf("6\n");
                 if (p != RT_NULL)
-                {
+                {rt_kprintf("7\n");
                     /* notify to upper layer */
                     if( device->netif->input(p, device->netif) != ERR_OK )
                     {
