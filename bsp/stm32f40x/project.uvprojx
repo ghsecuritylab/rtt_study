@@ -527,6 +527,11 @@
               <FileType>1</FileType>
               <FilePath>drivers\w25qxx.c</FilePath>
             </File>
+            <File>
+              <FileName>stm32f4x7_eth_bsp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\drivers\stm32f4x7_eth_bsp.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

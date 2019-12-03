@@ -1977,7 +1977,7 @@ __return:
 
     return 0;
 }
-//INIT_DEVICE_EXPORT(rt_hw_sdcard_init);
+INIT_DEVICE_EXPORT(rt_hw_sdcard_init);
 
 void SDIO_IRQHandler(void)
 {
