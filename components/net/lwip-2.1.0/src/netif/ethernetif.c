@@ -298,7 +298,7 @@ rt_err_t eth_device_linkchange(struct eth_device* dev, rt_bool_t up)
     rt_uint32_t level;
 
     RT_ASSERT(dev != RT_NULL);
-
+    rt_kprintf("xxxx\n");
     level = rt_hw_interrupt_disable();
     dev->link_changed = 0x01;
     if (up == RT_TRUE)
@@ -306,7 +306,7 @@ rt_err_t eth_device_linkchange(struct eth_device* dev, rt_bool_t up)
     else
         dev->link_status = 0x00;
     rt_hw_interrupt_enable(level);
-
+    rt_kprintf("xxwwxx\n");
     /* post message to ethernet thread */
     return rt_mb_send(&eth_rx_thread_mb, (rt_uint32_t)dev);
 }
@@ -377,7 +377,7 @@ static void eth_rx_thread_entry(void* parameter)
                 status = device->link_status;
                 device->link_changed = 0x00;
                 rt_hw_interrupt_enable(level);
-                rt_kprintf("3\n");
+                rt_kprintf("3:%d\n",status);
                 if (status)
                     netifapi_netif_set_link_up(device->netif);
                 else
