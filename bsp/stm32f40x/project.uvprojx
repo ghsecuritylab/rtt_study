@@ -518,6 +518,11 @@
               <FilePath>drivers\stm32f4xx_eth.c</FilePath>
             </File>
             <File>
+              <FileName>stm32f4x7_eth_bsp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\stm32f4x7_eth_bsp.c</FilePath>
+            </File>
+            <File>
               <FileName>gpio.c</FileName>
               <FileType>1</FileType>
               <FilePath>drivers\gpio.c</FilePath>
@@ -526,11 +531,6 @@
               <FileName>w25qxx.c</FileName>
               <FileType>1</FileType>
               <FilePath>drivers\w25qxx.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4x7_eth_bsp.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\drivers\stm32f4x7_eth_bsp.c</FilePath>
             </File>
           </Files>
         </Group>

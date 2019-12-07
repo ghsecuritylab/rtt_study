@@ -147,9 +147,6 @@
 #define RT_LWIP_IGMP
 #define RT_LWIP_ICMP
 #define RT_LWIP_DNS
-//#define RT_LWIP_DHCP
-#define IP_SOF_BROADCAST 1
-#define IP_SOF_BROADCAST_RECV 1
 
 /* Static IPv4 Address */
 
@@ -173,14 +170,14 @@
 #define RT_LWIP_ETHTHREAD_PRIORITY 12
 #define RT_LWIP_ETHTHREAD_STACKSIZE 1024
 #define RT_LWIP_ETHTHREAD_MBOX_SIZE 8
+#define RT_LWIP_REASSEMBLY_FRAG
 #define LWIP_NETIF_STATUS_CALLBACK 1
 #define SO_REUSE 1
 #define LWIP_SO_RCVTIMEO 1
 #define LWIP_SO_SNDTIMEO 1
 #define LWIP_SO_RCVBUF 1
-#define LWIP_NETIF_LOOPBACK 0
-#define RT_LWIP_DEBUG
-#define RT_LWIP_NETIF_DEBUG
+#define RT_LWIP_NETIF_LOOPBACK
+#define LWIP_NETIF_LOOPBACK 1
 
 /* Modbus master and slave stack */
 

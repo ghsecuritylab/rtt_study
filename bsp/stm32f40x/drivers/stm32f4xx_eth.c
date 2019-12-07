@@ -5986,7 +5986,7 @@ uint32_t ETH_GetMMCRegister(uint32_t ETH_MMCReg)
 #include "lwipopts.h"
 
 /* debug option */
-#define ETH_DEBUG
+//#define ETH_DEBUG
 #define ETH_RX_DUMP
 #define ETH_TX_DUMP
 
@@ -6262,6 +6262,16 @@ static rt_err_t rt_stm32_eth_init(rt_device_t dev)
     struct rt_stm32_eth * stm32_eth = (struct rt_stm32_eth *)dev;
     ETH_BSP_Config();
     
+    /* Initialize Tx Descriptors list: Chain Mode */
+    ETH_DMATxDescChainInit(DMATxDscrTab, &Tx_Buff[0][0], ETH_TXBUFNB);
+    /* Initialize Rx Descriptors list: Chain Mode  */
+    ETH_DMARxDescChainInit(DMARxDscrTab, &Rx_Buff[0][0], ETH_RXBUFNB);
+
+    /* MAC address configuration */
+    ETH_MACAddressConfig(ETH_MAC_Address0, (u8*)&stm32_eth_device.dev_addr[0]);
+
+    /* Enable MAC and DMA transmission and reception */
+    ETH_Start();
 #if LWIP_IPV4 && LWIP_IGMP
     netif_set_igmp_mac_filter(stm32_eth->parent.netif, igmp_mac_filter);
 #endif /* LWIP_IPV4 && LWIP_IGMP */
@@ -6318,7 +6328,6 @@ rt_err_t rt_stm32_eth_tx( rt_device_t dev, struct pbuf* p)
 {
     struct pbuf* q;
     rt_uint32_t offset;
-
     /* Check if the descriptor is owned by the ETHERNET DMA (when set) or CPU (when reset) */
     while ((DMATxDescToSet->Status & ETH_DMATxDesc_OWN) != (uint32_t)RESET)
     {
@@ -6334,7 +6343,6 @@ rt_err_t rt_stm32_eth_tx( rt_device_t dev, struct pbuf* p)
         if (result == RT_EOK) break;
         if (result == -RT_ERROR) return -RT_ERROR;
     }
-
     offset = 0;
     for (q = p; q != NULL; q = q->next)
     {
@@ -6368,7 +6376,6 @@ rt_err_t rt_stm32_eth_tx( rt_device_t dev, struct pbuf* p)
         STM32_ETH_PRINTF("\r\ndump done!\r\n");
     }
 #endif
-
     /* Setting the Frame Length: bits[12:0] */
     DMATxDescToSet->ControlBufferSize = (p->tot_len & ETH_DMATxDesc_TBS1);
     /* Setting the last segment and first segment bits (in this case a frame is transmitted in one descriptor) */
@@ -6408,7 +6415,6 @@ rt_err_t rt_stm32_eth_tx( rt_device_t dev, struct pbuf* p)
     /* Chained Mode */
     /* Selects the next DMA Tx descriptor list for next buffer to send */
     DMATxDescToSet = (ETH_DMADESCTypeDef*) (DMATxDescToSet->Buffer2NextDescAddr);
-
     /* Return SUCCESS */
     return RT_EOK;
 }
@@ -6553,7 +6559,7 @@ static void phy_monitor_thread_entry(void *parameter)
     while(1)
     {
         uint16_t status  = ETH_ReadPHYRegister(phy_addr, PHY_BSR);
-        STM32_ETH_PRINTF("LAN8720 status:0x%04X\r\n", status);
+        //STM32_ETH_PRINTF("LAN8720 status:0x%04X\r\n", status);
 
         phy_speed_new = 0;
 
@@ -6562,7 +6568,7 @@ static void phy_monitor_thread_entry(void *parameter)
             uint16_t SR;
 
             SR = ETH_ReadPHYRegister(phy_addr, 31);
-            STM32_ETH_PRINTF("LAN8720 REG 31:0x%04X\r\n", SR);
+            //STM32_ETH_PRINTF("LAN8720 REG 31:0x%04X\r\n", SR);
 
             SR = (SR >> 2) & 0x07; /* LAN8720, REG31[4:2], Speed Indication. */
             phy_speed_new = PHY_LINK_MASK;
@@ -6675,6 +6681,7 @@ void rt_hw_stm32_eth_init(void)
     rt_sem_init(&tx_wait, "tx_wait", 0, RT_IPC_FLAG_FIFO);
 
     /* register eth device */
+    
     eth_device_init(&(stm32_eth_device.parent), "e0");
 
     /* start phy monitor */
@@ -6683,11 +6690,11 @@ void rt_hw_stm32_eth_init(void)
         tid = rt_thread_create("phy",
                                phy_monitor_thread_entry,
                                RT_NULL,
-                               512,
+                               512*8,
                                RT_THREAD_PRIORITY_MAX - 2,
                                2);
         if (tid != RT_NULL)
             rt_thread_startup(tid);
     }
 }
-INIT_PREV_EXPORT(rt_hw_stm32_eth_init);
+INIT_DEVICE_EXPORT(rt_hw_stm32_eth_init);

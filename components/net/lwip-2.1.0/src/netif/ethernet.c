@@ -306,8 +306,7 @@ ethernet_output(struct netif * netif, struct pbuf * p,
   LWIP_ASSERT("netif->hwaddr_len must be 6 for ethernet_output!",
               (netif->hwaddr_len == ETH_HWADDR_LEN));
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE,
-              ("ethernet_output: sending packet %p\n", (void *)p));
-
+              ("ethernet_output: sending packet1 %p\n", (void *)p));
   /* send the packet */
   return netif->linkoutput(netif, p);
 

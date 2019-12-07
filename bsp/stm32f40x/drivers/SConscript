@@ -11,11 +11,15 @@ spi.c
 drv_hwtimer.c
 sys.c
 sdcard.c
+
 """)
 
 # add Ethernet drivers.
 if GetDepend('RT_USING_LWIP'):
     src += ['stm32f4xx_eth.c']
+	
+if GetDepend('RT_USING_LWIP'):
+	src += ['stm32f4x7_eth_bsp.c']
 
 # add gpio drivers.
 if GetDepend('RT_USING_PIN'):

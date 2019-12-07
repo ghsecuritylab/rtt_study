@@ -111,10 +111,8 @@ static err_t ethernetif_linkoutput(struct netif *netif, struct pbuf *p)
 #ifndef LWIP_NO_TX_THREAD
     struct eth_tx_msg msg;
     struct eth_device* enetif;
-
     RT_ASSERT(netif != RT_NULL);
     enetif = (struct eth_device*)netif->state;
-
     /* send a message to eth tx thread */
     msg.netif = netif;
     msg.buf   = p;
@@ -125,7 +123,6 @@ static err_t ethernetif_linkoutput(struct netif *netif, struct pbuf *p)
     }
 #else
     struct eth_device* enetif;
-
     RT_ASSERT(netif != RT_NULL);
     enetif = (struct eth_device*)netif->state;
 
@@ -298,7 +295,6 @@ rt_err_t eth_device_linkchange(struct eth_device* dev, rt_bool_t up)
     rt_uint32_t level;
 
     RT_ASSERT(dev != RT_NULL);
-    rt_kprintf("xxxx\n");
     level = rt_hw_interrupt_disable();
     dev->link_changed = 0x01;
     if (up == RT_TRUE)
@@ -306,7 +302,6 @@ rt_err_t eth_device_linkchange(struct eth_device* dev, rt_bool_t up)
     else
         dev->link_status = 0x00;
     rt_hw_interrupt_enable(level);
-    rt_kprintf("xxwwxx\n");
     /* post message to ethernet thread */
     return rt_mb_send(&eth_rx_thread_mb, (rt_uint32_t)dev);
 }
@@ -334,10 +329,8 @@ static void eth_tx_thread_entry(void* parameter)
         if (rt_mb_recv(&eth_tx_thread_mb, (rt_uint32_t*)&msg, RT_WAITING_FOREVER) == RT_EOK)
         {
             struct eth_device* enetif;
-
             RT_ASSERT(msg->netif != RT_NULL);
             RT_ASSERT(msg->buf   != RT_NULL);
-
             enetif = (struct eth_device*)msg->netif->state;
             if (enetif != RT_NULL)
             {
@@ -347,7 +340,6 @@ static void eth_tx_thread_entry(void* parameter)
                     /* transmit eth packet failed */
                 }
             }
-
             /* send ACK */
             rt_sem_release(&(enetif->tx_ack));
         }
@@ -366,34 +358,28 @@ static void eth_rx_thread_entry(void* parameter)
         if (rt_mb_recv(&eth_rx_thread_mb, (rt_uint32_t*)&device, RT_WAITING_FOREVER) == RT_EOK)
         {
             struct pbuf *p;
-            rt_kprintf("1\n");
             /* check link status */
             if (device->link_changed)
             {
                 int status;
                 rt_uint32_t level;
-                rt_kprintf("2\n");
                 level = rt_hw_interrupt_disable();
                 status = device->link_status;
                 device->link_changed = 0x00;
                 rt_hw_interrupt_enable(level);
-                rt_kprintf("3:%d\n",status);
                 if (status)
                     netifapi_netif_set_link_up(device->netif);
                 else
                     netifapi_netif_set_link_down(device->netif);
-                rt_kprintf("4\n");
             }
 
             /* receive all of buffer */
             while (1)
             {
                 if(device->eth_rx == RT_NULL) break;
-                rt_kprintf("5\n");
                 p = device->eth_rx(&(device->parent));
-                rt_kprintf("6\n");
                 if (p != RT_NULL)
-                {rt_kprintf("7\n");
+                {
                     /* notify to upper layer */
                     if( device->netif->input(p, device->netif) != ERR_OK )
                     {

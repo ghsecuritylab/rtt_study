@@ -1145,6 +1145,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
 
   /* send ARP query */
 #if LWIP_AUTOIP
+    rt_kprintf("netif_1set_link_upetharp_raw\n");
   /* If we are using Link-Local, all ARP packets that contain a Link-Local
    * 'sender IP address' MUST be sent using link-layer broadcast instead of
    * link-layer unicast. (See RFC3927 Section 2.5, last paragraph) */

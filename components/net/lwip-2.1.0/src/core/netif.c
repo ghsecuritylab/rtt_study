@@ -881,6 +881,7 @@ netif_issue_reports(struct netif *netif, u8_t report_type)
       !(netif->flags & NETIF_FLAG_UP)) {
     return;
   }
+      rt_kprintf("netif_set2_link_up\n");
 
 #if LWIP_IPV4
   if ((report_type & NETIF_REPORT_TYPE_IPV4) &&
@@ -888,9 +889,12 @@ netif_issue_reports(struct netif *netif, u8_t report_type)
 #if LWIP_ARP
     /* For Ethernet network interfaces, we would like to send a "gratuitous ARP" */
     if (netif->flags & (NETIF_FLAG_ETHARP)) {
+    rt_kprintf("netif_1set_link_up12\n");
       etharp_gratuitous(netif);
+      rt_kprintf("netif_1set_link_rweup\n");
     }
 #endif /* LWIP_ARP */
+rt_kprintf("netif_1set_link_up\n");
 
 #if LWIP_IGMP
     /* resend IGMP memberships */
@@ -900,6 +904,7 @@ netif_issue_reports(struct netif *netif, u8_t report_type)
 #endif /* LWIP_IGMP */
   }
 #endif /* LWIP_IPV4 */
+rt_kprintf("netif_s122et_link_up\n");
 
 #if LWIP_IPV6
   if (report_type & NETIF_REPORT_TYPE_IPV6) {
@@ -988,24 +993,28 @@ void
 netif_set_link_up(struct netif *netif)
 {
   LWIP_ASSERT_CORE_LOCKED();
-
+   rt_kprintf("netif_set_link_up\n");
   LWIP_ERROR("netif_set_link_up: invalid netif", netif != NULL, return);
-
+    
   if (!(netif->flags & NETIF_FLAG_LINK_UP)) {
     netif_set_flags(netif, NETIF_FLAG_LINK_UP);
 
 #if LWIP_DHCP
     dhcp_network_changed(netif);
 #endif /* LWIP_DHCP */
+rt_kprintf("netif_set_link_up\n");
 
 #if LWIP_AUTOIP
     autoip_network_changed(netif);
 #endif /* LWIP_AUTOIP */
+    rt_kprintf("netif_set_link_up\n");
 
     netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV4 | NETIF_REPORT_TYPE_IPV6);
+    rt_kprintf("netif_set_link_up\n");
 #if LWIP_IPV6
     nd6_restart_netif(netif);
 #endif /* LWIP_IPV6 */
+    rt_kprintf("netif_set_link_up\n");
 
     NETIF_LINK_CALLBACK(netif);
 #if LWIP_NETIF_EXT_STATUS_CALLBACK

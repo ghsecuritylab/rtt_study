@@ -304,21 +304,14 @@ netifapi_netif_common(struct netif *netif, netifapi_void_fn voidfunc,
                       netifapi_errt_fn errtfunc)
 {
   err_t err;
-  rt_kprintf("eee\n");
   NETIFAPI_VAR_DECLARE(msg);
-  rt_kprintf("e1ee\n");
   NETIFAPI_VAR_ALLOC(msg);
-  rt_kprintf("eee3\n");
 
   NETIFAPI_VAR_REF(msg).netif = netif;
-  rt_kprintf("eee2\n");
   NETIFAPI_VAR_REF(msg).msg.common.voidfunc = voidfunc;
   NETIFAPI_VAR_REF(msg).msg.common.errtfunc = errtfunc;
-  rt_kprintf("ee4e\n");
   err = tcpip_api_call(netifapi_do_netif_common, &API_VAR_REF(msg).call);
-  rt_kprintf("ee23e\n");
   NETIFAPI_VAR_FREE(msg);
-  rt_kprintf("ee23e\n");
   return err;
 }
 
