@@ -11,15 +11,31 @@ spi.c
 drv_hwtimer.c
 sys.c
 sdcard.c
-
+timer.c
+dac.c
 """)
+
+CPPPATH = [cwd]
+
+src += Glob(cwd+'/rtc/*.c')
+CPPPATH += [cwd + '/rtc/']
+
+src += Glob(cwd+'/lcd/*.c')
+CPPPATH += [cwd + '/lcd/']
+
+src += Glob(cwd+'/mp3/*.c')
+src += Glob(cwd+'/mp3/real/*.c')
+src += Glob(cwd+'/mp3/real/arm/*.s')
+CPPPATH += [cwd + '/mp3/']
+CPPPATH += [cwd + '/mp3/real/']
+CPPPATH += [cwd + '/mp3/pub/']
+
+src += Glob(cwd+'/sram/*.c')
+CPPPATH += [cwd + '/sram/']
 
 # add Ethernet drivers.
 if GetDepend('RT_USING_LWIP'):
-    src += ['stm32f4xx_eth.c']
-	
-if GetDepend('RT_USING_LWIP'):
-	src += ['stm32f4x7_eth_bsp.c']
+    src += Glob(cwd + '/eth/*.c')
 
 # add gpio drivers.
 if GetDepend('RT_USING_PIN'):
@@ -36,7 +52,8 @@ if GetDepend('RT_USING_W25QXX'):
 if GetDepend('RT_USING_USB_DEVICE'):
 	src += Glob(cwd+'/usbdevice/*.c')
 
-CPPPATH = [cwd]
+
+CPPPATH += [cwd + '/eth/']
 CPPPATH += [cwd + '/../../../components/drivers/include/drivers/']
 CPPPATH += [cwd + '/usbdevice/inc/']
 

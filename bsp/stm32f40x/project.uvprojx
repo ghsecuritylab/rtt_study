@@ -206,7 +206,7 @@
             <Ro3Chk>0</Ro3Chk>
             <Ir1Chk>1</Ir1Chk>
             <Ir2Chk>0</Ir2Chk>
-            <Ra1Chk>0</Ra1Chk>
+            <Ra1Chk>1</Ra1Chk>
             <Ra2Chk>0</Ra2Chk>
             <Ra3Chk>0</Ra3Chk>
             <Im1Chk>1</Im1Chk>
@@ -284,8 +284,8 @@
               </OCR_RVCT5>
               <OCR_RVCT6>
                 <Type>0</Type>
-                <StartAddress>0x0</StartAddress>
-                <Size>0x0</Size>
+                <StartAddress>0x68000000</StartAddress>
+                <Size>0x100000</Size>
               </OCR_RVCT6>
               <OCR_RVCT7>
                 <Type>0</Type>
@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>RT_USING_ARM_LIBC, USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>.;..\..\include;applications;.;drivers;..\..\components\drivers\include\drivers;drivers\usbdevice\inc;Libraries\STM32F4xx_StdPeriph_Driver\inc;Libraries\CMSIS\ST\STM32F4xx\Include;Libraries\CMSIS\Include;packages\CmBacktrace-latest;packages\fastlz-latest;packages\netutils-latest\iperf;packages\netutils-latest\netio;packages\netutils-latest\ping;packages\netutils-latest\tcpdump;packages\netutils-latest\telnet;packages\netutils-latest\tftp;.;packages\optparse-v1.0.0;..\..\libcpu\arm\common;..\..\libcpu\arm\cortex-m4;..\..\components\dfs\include;..\..\components\dfs\filesystems\devfs;..\..\components\dfs\filesystems\elmfat;..\..\components\dfs\filesystems\romfs;..\..\components\dfs\filesystems\uffs;..\..\components\dfs\filesystems\uffs\src\inc;..\..\components\drivers\audio;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\drivers\spi;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\finsh;..\..\components\libc\compilers\armlibc;..\..\components\libc\compilers\common;..\..\components\net\lwip-2.1.0\src;..\..\components\net\lwip-2.1.0\src\include;..\..\components\net\lwip-2.1.0\src\arch\include;..\..\components\net\lwip-2.1.0\src\include\netif;..\..\components\net\sal_socket\include;..\..\components\net\sal_socket\include\socket;..\..\components\net\sal_socket\impl;..\..\components\net\sal_socket\include\dfs_net;..\..\components\net\sal_socket\include\dfs_net\sys_select;..\..\components\net\sal_socket\include\socket\sys_socket;..\..\components\utilities\ymodem</IncludePath>
+              <IncludePath>.;..\..\include;applications;.;drivers;drivers\rtc;drivers\lcd;drivers\mp3;drivers\mp3\real;drivers\mp3\pub;drivers\sram;drivers\eth;..\..\components\drivers\include\drivers;drivers\usbdevice\inc;Libraries\STM32F4xx_StdPeriph_Driver\inc;Libraries\CMSIS\ST\STM32F4xx\Include;Libraries\CMSIS\Include;packages\CmBacktrace-latest;packages\fastlz-latest;packages\gui_engine-latest\include;packages\gui_engine-latest\libraries\lodepng;packages\gui_engine-latest\example;packages\optparse-v1.0.0;..\..\libcpu\arm\common;..\..\libcpu\arm\cortex-m4;..\..\components\dfs\include;..\..\components\dfs\filesystems\devfs;..\..\components\dfs\filesystems\elmfat;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\drivers\spi;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\finsh;..\..\components\libc\compilers\armlibc;..\..\components\libc\compilers\common;..\..\components\net\lwip-2.1.0\src;..\..\components\net\lwip-2.1.0\src\include;..\..\components\net\lwip-2.1.0\src\arch\include;..\..\components\net\lwip-2.1.0\src\include\netif;..\..\components\net\sal_socket\include;..\..\components\net\sal_socket\include\socket;..\..\components\net\sal_socket\impl;..\..\components\net\sal_socket\include\dfs_net;..\..\components\net\sal_socket\include\dfs_net\sys_select;..\..\components\net\sal_socket\include\socket\sys_socket;..\..\components\utilities\ymodem</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -513,14 +513,139 @@
               <FilePath>drivers\sdcard.c</FilePath>
             </File>
             <File>
-              <FileName>stm32f4xx_eth.c</FileName>
+              <FileName>drivers_timer.c</FileName>
               <FileType>1</FileType>
-              <FilePath>drivers\stm32f4xx_eth.c</FilePath>
+              <FilePath>drivers\timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>dac.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\dac.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4_rtc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\rtc\stm32f4_rtc.c</FilePath>
+            </File>
+            <File>
+              <FileName>drv_lcd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\lcd\drv_lcd.c</FilePath>
+            </File>
+            <File>
+              <FileName>audio_common.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\mp3\audio_common.c</FilePath>
+            </File>
+            <File>
+              <FileName>audio_mp3.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\mp3\audio_mp3.c</FilePath>
+            </File>
+            <File>
+              <FileName>audio_wav.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\mp3\audio_wav.c</FilePath>
+            </File>
+            <File>
+              <FileName>mp3dec.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\mp3\mp3dec.c</FilePath>
+            </File>
+            <File>
+              <FileName>mp3tabs.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\mp3\mp3tabs.c</FilePath>
+            </File>
+            <File>
+              <FileName>music.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\mp3\music.c</FilePath>
+            </File>
+            <File>
+              <FileName>bitstream.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\mp3\real\bitstream.c</FilePath>
+            </File>
+            <File>
+              <FileName>buffers.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\mp3\real\buffers.c</FilePath>
+            </File>
+            <File>
+              <FileName>dct32.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\mp3\real\dct32.c</FilePath>
+            </File>
+            <File>
+              <FileName>dequant.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\mp3\real\dequant.c</FilePath>
+            </File>
+            <File>
+              <FileName>dqchan.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\mp3\real\dqchan.c</FilePath>
+            </File>
+            <File>
+              <FileName>huffman.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\mp3\real\huffman.c</FilePath>
+            </File>
+            <File>
+              <FileName>hufftabs.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\mp3\real\hufftabs.c</FilePath>
+            </File>
+            <File>
+              <FileName>imdct.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\mp3\real\imdct.c</FilePath>
+            </File>
+            <File>
+              <FileName>scalfact.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\mp3\real\scalfact.c</FilePath>
+            </File>
+            <File>
+              <FileName>stproc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\mp3\real\stproc.c</FilePath>
+            </File>
+            <File>
+              <FileName>subband.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\mp3\real\subband.c</FilePath>
+            </File>
+            <File>
+              <FileName>trigtabs.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\mp3\real\trigtabs.c</FilePath>
+            </File>
+            <File>
+              <FileName>asmmisc.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>drivers\mp3\real\arm\asmmisc.s</FilePath>
+            </File>
+            <File>
+              <FileName>asmpoly_thumb2.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>drivers\mp3\real\arm\asmpoly_thumb2.s</FilePath>
+            </File>
+            <File>
+              <FileName>drv_sram.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\sram\drv_sram.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4x7_eth_bsp.c</FileName>
               <FileType>1</FileType>
-              <FilePath>drivers\stm32f4x7_eth_bsp.c</FilePath>
+              <FilePath>drivers\eth\stm32f4x7_eth_bsp.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_eth.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\eth\stm32f4xx_eth.c</FilePath>
             </File>
             <File>
               <FileName>gpio.c</FileName>
@@ -824,52 +949,237 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>NetUtils</GroupName>
+          <GroupName>GuiEngine</GroupName>
           <Files>
             <File>
-              <FileName>iperf.c</FileName>
+              <FileName>asc12font.c</FileName>
               <FileType>1</FileType>
-              <FilePath>packages\netutils-latest\iperf\iperf.c</FilePath>
+              <FilePath>packages\gui_engine-latest\src\asc12font.c</FilePath>
             </File>
             <File>
-              <FileName>netio.c</FileName>
+              <FileName>asc16font.c</FileName>
               <FileType>1</FileType>
-              <FilePath>packages\netutils-latest\netio\netio.c</FilePath>
+              <FilePath>packages\gui_engine-latest\src\asc16font.c</FilePath>
             </File>
             <File>
-              <FileName>ping.c</FileName>
+              <FileName>blit.c</FileName>
               <FileType>1</FileType>
-              <FilePath>packages\netutils-latest\ping\ping.c</FilePath>
+              <FilePath>packages\gui_engine-latest\src\blit.c</FilePath>
             </File>
             <File>
-              <FileName>tcpdump.c</FileName>
+              <FileName>box.c</FileName>
               <FileType>1</FileType>
-              <FilePath>packages\netutils-latest\tcpdump\tcpdump.c</FilePath>
+              <FilePath>packages\gui_engine-latest\src\box.c</FilePath>
             </File>
             <File>
-              <FileName>telnet.c</FileName>
+              <FileName>color.c</FileName>
               <FileType>1</FileType>
-              <FilePath>packages\netutils-latest\telnet\telnet.c</FilePath>
+              <FilePath>packages\gui_engine-latest\src\color.c</FilePath>
             </File>
             <File>
-              <FileName>tftp_client.c</FileName>
+              <FileName>container.c</FileName>
               <FileType>1</FileType>
-              <FilePath>packages\netutils-latest\tftp\tftp_client.c</FilePath>
+              <FilePath>packages\gui_engine-latest\src\container.c</FilePath>
             </File>
             <File>
-              <FileName>tftp_port.c</FileName>
+              <FileName>dc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>packages\netutils-latest\tftp\tftp_port.c</FilePath>
+              <FilePath>packages\gui_engine-latest\src\dc.c</FilePath>
             </File>
             <File>
-              <FileName>tftp_server.c</FileName>
+              <FileName>dc_blend.c</FileName>
               <FileType>1</FileType>
-              <FilePath>packages\netutils-latest\tftp\tftp_server.c</FilePath>
+              <FilePath>packages\gui_engine-latest\src\dc_blend.c</FilePath>
             </File>
             <File>
-              <FileName>tftp_xfer.c</FileName>
+              <FileName>dc_buffer.c</FileName>
               <FileType>1</FileType>
-              <FilePath>packages\netutils-latest\tftp\tftp_xfer.c</FilePath>
+              <FilePath>packages\gui_engine-latest\src\dc_buffer.c</FilePath>
+            </File>
+            <File>
+              <FileName>dc_client.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\dc_client.c</FilePath>
+            </File>
+            <File>
+              <FileName>dc_hw.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\dc_hw.c</FilePath>
+            </File>
+            <File>
+              <FileName>dc_rotozoom.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\dc_rotozoom.c</FilePath>
+            </File>
+            <File>
+              <FileName>dc_trans.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\dc_trans.c</FilePath>
+            </File>
+            <File>
+              <FileName>filerw.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\filerw.c</FilePath>
+            </File>
+            <File>
+              <FileName>font.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\font.c</FilePath>
+            </File>
+            <File>
+              <FileName>font_bmp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\font_bmp.c</FilePath>
+            </File>
+            <File>
+              <FileName>font_fnt.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\font_fnt.c</FilePath>
+            </File>
+            <File>
+              <FileName>font_freetype.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\font_freetype.c</FilePath>
+            </File>
+            <File>
+              <FileName>font_hz_bmp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\font_hz_bmp.c</FilePath>
+            </File>
+            <File>
+              <FileName>font_hz_file.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\font_hz_file.c</FilePath>
+            </File>
+            <File>
+              <FileName>gb2312.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\gb2312.c</FilePath>
+            </File>
+            <File>
+              <FileName>hz12font.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\hz12font.c</FilePath>
+            </File>
+            <File>
+              <FileName>hz16font.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\hz16font.c</FilePath>
+            </File>
+            <File>
+              <FileName>image.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\image.c</FilePath>
+            </File>
+            <File>
+              <FileName>image_bmp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\image_bmp.c</FilePath>
+            </File>
+            <File>
+              <FileName>image_container.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\image_container.c</FilePath>
+            </File>
+            <File>
+              <FileName>image_hdc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\image_hdc.c</FilePath>
+            </File>
+            <File>
+              <FileName>image_jpg.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\image_jpg.c</FilePath>
+            </File>
+            <File>
+              <FileName>image_png.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\image_png.c</FilePath>
+            </File>
+            <File>
+              <FileName>image_xpm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\image_xpm.c</FilePath>
+            </File>
+            <File>
+              <FileName>matrix.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\matrix.c</FilePath>
+            </File>
+            <File>
+              <FileName>mouse.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\mouse.c</FilePath>
+            </File>
+            <File>
+              <FileName>region.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\region.c</FilePath>
+            </File>
+            <File>
+              <FileName>rtgui_app.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\rtgui_app.c</FilePath>
+            </File>
+            <File>
+              <FileName>rtgui_driver.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\rtgui_driver.c</FilePath>
+            </File>
+            <File>
+              <FileName>rtgui_object.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\rtgui_object.c</FilePath>
+            </File>
+            <File>
+              <FileName>rtgui_system.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\rtgui_system.c</FilePath>
+            </File>
+            <File>
+              <FileName>server.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\server.c</FilePath>
+            </File>
+            <File>
+              <FileName>title.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\title.c</FilePath>
+            </File>
+            <File>
+              <FileName>topwin.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\topwin.c</FilePath>
+            </File>
+            <File>
+              <FileName>widget.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\widget.c</FilePath>
+            </File>
+            <File>
+              <FileName>window.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\src\window.c</FilePath>
+            </File>
+            <File>
+              <FileName>lodepng.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\libraries\lodepng\lodepng.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>gui_demo</GroupName>
+          <Files>
+            <File>
+              <FileName>gui_demo.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\example\gui_demo.c</FilePath>
+            </File>
+            <File>
+              <FileName>resources.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>packages\gui_engine-latest\example\resources.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -966,126 +1276,6 @@
               <FileType>1</FileType>
               <FilePath>..\..\components\dfs\filesystems\elmfat\option\ccsbcs.c</FilePath>
             </File>
-            <File>
-              <FileName>dfs_romfs.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\romfs\dfs_romfs.c</FilePath>
-            </File>
-            <File>
-              <FileName>romfs.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\romfs\romfs.c</FilePath>
-            </File>
-            <File>
-              <FileName>dfs_uffs.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\dfs_uffs.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_nandif.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\uffs_nandif.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_rtthread.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\uffs_rtthread.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_badblock.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\src\uffs\uffs_badblock.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_blockinfo.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\src\uffs\uffs_blockinfo.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_buf.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\src\uffs\uffs_buf.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_debug.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\src\uffs\uffs_debug.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_device.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\src\uffs\uffs_device.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_ecc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\src\uffs\uffs_ecc.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_crc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\src\uffs\uffs_crc.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_fd.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\src\uffs\uffs_fd.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_find.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\src\uffs\uffs_find.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_flash.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\src\uffs\uffs_flash.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_fs.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\src\uffs\uffs_fs.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_init.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\src\uffs\uffs_init.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_mem.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\src\uffs\uffs_mem.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_mtb.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\src\uffs\uffs_mtb.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_pool.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\src\uffs\uffs_pool.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_public.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\src\uffs\uffs_public.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_tree.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\src\uffs\uffs_tree.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_utils.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\src\uffs\uffs_utils.c</FilePath>
-            </File>
-            <File>
-              <FileName>uffs_version.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\uffs\src\uffs\uffs_version.c</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
@@ -1161,16 +1351,6 @@
           </GroupOption>
           <Files>
             <File>
-              <FileName>audio.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\drivers\audio\audio.c</FilePath>
-            </File>
-            <File>
-              <FileName>audio_pipe.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\drivers\audio\audio_pipe.c</FilePath>
-            </File>
-            <File>
               <FileName>pin.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\components\drivers\misc\pin.c</FilePath>
@@ -1244,11 +1424,6 @@
               <FileName>workqueue.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\components\drivers\src\workqueue.c</FilePath>
-            </File>
-            <File>
-              <FileName>watchdog.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\drivers\watchdog\watchdog.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -97,10 +97,6 @@
 #define RT_DFS_ELM_MAX_SECTOR_SIZE 512
 #define RT_DFS_ELM_REENTRANT
 #define RT_USING_DFS_DEVFS
-#define RT_USING_DFS_ROMFS
-#define RT_USING_DFS_UFFS
-#define RT_UFFS_ECC_MODE_0
-#define RT_UFFS_ECC_MODE 0
 
 /* Device Drivers */
 
@@ -114,8 +110,6 @@
 #define RT_USING_SPI
 #define RT_USING_SPI_MSD
 #define RT_USING_W25QXX
-#define RT_USING_WDT
-#define RT_USING_AUDIO
 
 /* Using WiFi */
 
@@ -150,7 +144,7 @@
 
 /* Static IPv4 Address */
 
-#define RT_LWIP_IPADDR "192.168.1.30"
+#define RT_LWIP_IPADDR "192.168.1.10"
 #define RT_LWIP_GWADDR "192.168.1.1"
 #define RT_LWIP_MSKADDR "255.255.255.0"
 #define RT_LWIP_UDP
@@ -207,16 +201,6 @@
 
 /* Wiced WiFi */
 
-#define PKG_USING_NETUTILS
-#define PKG_NETUTILS_PING
-#define PKG_NETUTILS_TFTP
-#define NETUTILS_TFTP_PORT 69
-#define PKG_NETUTILS_IPERF
-#define PKG_NETUTILS_NETIO
-#define PKG_NETUTILS_TELNET
-#define PKG_NETUTILS_TCPDUMP
-#define PKG_NETUTILS_TCPDUMP_DBG
-#define PKG_USING_NETUTILS_LATEST_VERSION
 
 /* IoT Cloud */
 
@@ -240,10 +224,20 @@
 
 /* system packages */
 
+#define PKG_USING_GUIENGINE
+#define PKG_USING_GUIENGINE_LATEST_VERSION
+#define PKG_USING_RGB888_PIXEL_BITS_24
+#define PKG_USING_RGB888_PIXEL_BITS 24
+#define GUIENGINE_NAME_MAX 16
+#define GUIENG_USING_FNT_FILE
+#define GUIENGINE_USING_FONT16
+#define GUIENGINE_USING_FONT12
+#define GUIENGINE_USING_PNG
+#define GUIENGINE_IMAGE_LODEPNG
+#define GUIENGINE_IMAGE_CONTAINER
+#define GUIENGINE_USING_DEMO
 
 /* peripheral libraries and drivers */
-
-/* sensors drivers */
 
 
 /* miscellaneous packages */
