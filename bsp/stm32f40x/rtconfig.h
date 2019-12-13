@@ -201,6 +201,13 @@
 
 /* Wiced WiFi */
 
+#define PKG_USING_NETUTILS
+#define PKG_NETUTILS_PING
+#define PKG_NETUTILS_TFTP
+#define NETUTILS_TFTP_PORT 69
+#define PKG_NETUTILS_IPERF
+#define PKG_NETUTILS_NETIO
+#define PKG_USING_NETUTILS_LATEST_VERSION
 
 /* IoT Cloud */
 
@@ -224,20 +231,10 @@
 
 /* system packages */
 
-#define PKG_USING_GUIENGINE
-#define PKG_USING_GUIENGINE_LATEST_VERSION
-#define PKG_USING_RGB888_PIXEL_BITS_24
-#define PKG_USING_RGB888_PIXEL_BITS 24
-#define GUIENGINE_NAME_MAX 16
-#define GUIENG_USING_FNT_FILE
-#define GUIENGINE_USING_FONT16
-#define GUIENGINE_USING_FONT12
-#define GUIENGINE_USING_PNG
-#define GUIENGINE_IMAGE_LODEPNG
-#define GUIENGINE_IMAGE_CONTAINER
-#define GUIENGINE_USING_DEMO
 
 /* peripheral libraries and drivers */
+
+/* sensors drivers */
 
 
 /* miscellaneous packages */

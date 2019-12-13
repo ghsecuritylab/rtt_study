@@ -402,7 +402,7 @@ void USART2_IRQHandler(void)
 }
 
 #ifdef RT_SERIAL_USING_DMA
-void DMA1_Stream5_IRQHandler(void) {
+void DMA1_Stream5_IRQHandler1(void) {
     /* enter interrupt */
     rt_interrupt_enter();
 

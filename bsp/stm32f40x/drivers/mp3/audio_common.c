@@ -145,7 +145,7 @@ uint8_t AudioPlay_Config(uint8_t Bits,uint32_t SampleRate,uint16_t BufSize)
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 	NVIC_Init(&NVIC_InitStructure);
 	DMA_Cmd(DMA1_Stream5, ENABLE);
-	rt_kprintf("配置结束\n");
+	//rt_kprintf("配置结束\n");
 	return 0;
 }
 
@@ -167,17 +167,23 @@ AudioFileType Audio_CheckFileExtname(char* path)
 
 void AudioPlayFile(char* path)
 {
+    char file_path[256];
+    rt_memset(file_path,0,50);
 	memset(&AudioPlayInfo,0,sizeof(AudioPlay_Info));
 	AudioPlay_ClearSem();
-	
-	switch(Audio_CheckFileExtname(path))//判断后缀名来确定播放的音频文件类型
+	AudioPlay_ClearBuf();
+	getcwd(file_path,256);
+	if (file_path[rt_strlen(file_path) - 1]  != '/')
+            strcat(file_path, "/");
+    strcat(file_path, path);
+	switch(Audio_CheckFileExtname(file_path))//判断后缀名来确定播放的音频文件类型
 	{
 		case AudioFileType_MP3:
-		    rt_kprintf("MP3播放\n");
+		    //rt_kprintf("MP3播放\n");
 			AudioPlayInfo.PlayRes = MP3_Play(path);
 			break;
 		case AudioFileType_WAV:
-		    rt_kprintf("WAV播放\n");
+		    //rt_kprintf("WAV播放\n");
 			AudioPlayInfo.PlayRes = WAV_Play(path);
 			break;
 		default:
@@ -218,18 +224,19 @@ void AudioPlay_Init(void)
 void Play_Start(void)
 {
 	DAC_DMACmd(DAC_Channel_1, ENABLE);
-	rt_kprintf("打开DAC使能\n");
+	//rt_kprintf("打开DAC使能\n");
 }
 
 void Play_Stop(void)
 {
 	DAC_DMACmd(DAC_Channel_1, DISABLE);
-	DAC->DHR12RD = 0x08000800;
-	AudioPlay_ClearBuf();
+	//DAC->DHR12RD = 0x08000800;
+	//AudioPlay_ClearBuf();
 }
 
-void DMA1_Stream5_IRQHandler1(void)
+void DMA1_Stream5_IRQHandler(void)
 {
+    rt_interrupt_enter();
     rt_sem_release(dma_int);
     DataRequestFlag = 1;
 	if(DMA_GetITStatus(DMA1_Stream5,DMA_IT_TCIF5))//传输完成中断标志
@@ -241,5 +248,6 @@ void DMA1_Stream5_IRQHandler1(void)
         DataRequestFlag = 2;
     }
 	DMA_ClearITPendingBit(DMA1_Stream5,DMA_IT_TCIF5 | DMA_IT_HTIF5);
+	rt_interrupt_leave();
 }
 

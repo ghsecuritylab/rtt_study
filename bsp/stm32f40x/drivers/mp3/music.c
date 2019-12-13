@@ -1,5 +1,6 @@
 #include "audio_common.h"
-char hellos[630*1024];//__attribute__((section("EXRAM")));
+//char hellos[630*1024];//__attribute__((section("EXRAM")));
+#include <rtthread.h>
 
 #define MUSIC_DEBUG
 #ifdef MUSIC_DEBUG
@@ -52,9 +53,10 @@ static void music_service_task(void *param)
             music_log("music_mQ rt_mb_recv fail!\n");
             continue;
         }
-        music_log("runing song %s\n",mb_message.file_name);
+        //music_log("runing song %s\n",mb_message.file_name);
         rt_sem_control(music_break,RT_IPC_CMD_RESET,0);//Ω´–≈∫≈¡øπÈ¡„
         AudioPlayFile(mb_message.file_name);
+       // music_log("runing song %s over\n",mb_message.file_name);
     }
 }
 
@@ -99,16 +101,18 @@ int music_action(int argc, char ** argv)
             music_log("please input the name of songs\n");
             return -RT_ERROR;
         }
+        rt_sem_release(dma_int);
+        rt_sem_release(music_break);
         rt_memset(&message_oo,0,sizeof(MESSAGE));
         rt_strncpy(message_oo.file_name,argv[2],rt_strlen(argv[2]));
         err = rt_mq_send(music_mq,(void*)&message_oo,sizeof(MESSAGE));
         if(err == RT_EOK)
         {
-            music_log("rt_mq_send done!\n");
+            //music_log("rt_mq_send done!\n");
         }
         else
         {
-            music_log("rt_mq_send fail!\n");
+            //music_log("rt_mq_send fail!\n");
             return -RT_ERROR;
         }
         return RT_EOK;
@@ -118,15 +122,35 @@ int music_action(int argc, char ** argv)
         rt_err_t err;
         rt_sem_release(dma_int);
         rt_sem_release(music_break);
-        Play_Stop();
         return RT_EOK;
     }
  return 0;
 }
+void dac_cmd(int argc, char ** argv)
+{
+    if (argc != 2)
+    {
+        music_log("Usage: err\n");
+        return;// -RT_ERROR;
+    }
+    if(!strncmp(argv[1],"run",rt_strlen("run")))
+    {
+        Play_Start();
+        //return RT_EOK;
+    }
+    if(!strncmp(argv[1],"stop",rt_strlen("st")))
+    {
+        Play_Stop();
+        //return RT_EOK;
+    }
+}
+INIT_APP_EXPORT(music_startup);
+
 #ifdef RT_USING_FINSH
 #include <finsh.h>
 MSH_CMD_EXPORT_ALIAS(music_startup, music, ----music_startup----);
-MSH_CMD_EXPORT_ALIAS(music_action,  play,  ----music play control----);
+MSH_CMD_EXPORT_ALIAS(music_action,  p,  ----music play control----);
+MSH_CMD_EXPORT_ALIAS(dac_cmd, dac_cmd, ----dac_cmd----);
 
 #endif
 

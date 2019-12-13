@@ -209,7 +209,7 @@ AudioPlayRes MP3_Play(char* path)
 	uint16_t* pOutputBuffer;//指向输出缓冲区的指针
 	int32_t offset,bytesleft;//buffer还剩余的有效数据
 	int br;
-	int fd;
+	int fd = -1;
 	MP3_Info* MP3Info;
 	
 	MP3Info = &__MP3Info;
@@ -217,12 +217,13 @@ AudioPlayRes MP3_Play(char* path)
 	fd = open(path,O_RDONLY);
 	if(fd == -1)//打开文件
 	{
+	    rt_kprintf("open file fail\n");
 		res =  AudioPlay_OpenFileError;//打开文件错误
 	}
 	else//打开成功
 	{
+	    //rt_kprintf("open file ok\n");
 		res = MP3_GetInfo(fd,MP3Info);//获取文件信息
-		
 		if(!res)
 		{			
 			AudioPlayInfo.FileType = AudioFileType_MP3;
@@ -241,21 +242,17 @@ AudioPlayRes MP3_Play(char* path)
 			}
 		}
 	}
-	
 	if(res == AudioPlay_OK)
 	{
 		mp3decoder = MP3InitDecoder();//MP3解码器初始化
-		
 		lseek(fd,MP3Info->DataStartOffset,SEEK_SET);//跳过文件头中tag信息
 		br = read(fd,MP3_INPUT_BUFFER,MP3_INPUT_BUFFER_SIZE);
 		if(br == -1)//填充满缓冲区
 		{
 			res = AudioPlay_ReadFileError;
 		}
-		
 		bytesleft = br;//读取的数据都是有效数据
 		readptr = MP3_INPUT_BUFFER;//MP3读指针指向buffer首地址
-		
 		Play_Start();
 		while(res == AudioPlay_OK)//没有出现数据异常(即可否找到帧同步字符)
 		{
@@ -264,6 +261,7 @@ AudioPlayRes MP3_Play(char* path)
 			if(offset < 0)//没有找到同步字符 播放结束也依赖此处跳出循环
 			{
 				res = AudioPlay_PlayEnd;
+				rt_kprintf("跳出帧解码循环\n");
 				break;//跳出帧解码循环
 			}
 			else//找到同步字符了
@@ -274,27 +272,19 @@ AudioPlayRes MP3_Play(char* path)
 				MP3Info->CurrentSec = MP3Info->TotalSec * (lseek(fd,0,SEEK_CUR) - MP3Info->DataStartOffset) / MP3Info->DataSize;//计算播放时间
 				
 				AudioPlayInfo.CurrentSec = MP3Info->CurrentSec;
-				
-				/*用户代码区*/
-				res = MusicPlayingProcess();
-				if(res)
-					break;//提高反应速度
-				/*用户代码区*/
-				
-				//AudioPlay_PendSem();//等待信号
-				rt_sem_take(dma_int,RT_WAITING_FOREVER);
-				rt_sem_control(dma_int,RT_IPC_CMD_RESET,0);//将信号量归零
+				/*用户代码区*/	
 				{
 				    rt_err_t err;
 				    err = rt_sem_trytake(music_break);
 				    if(err==RT_EOK)
 				    {
-				        rt_kprintf("exiting music player\n");
+				        //rt_kprintf("exiting music player\n");
 				        break;
 				    }
 				}
+				rt_sem_take(dma_int,RT_WAITING_FOREVER);
+				rt_sem_control(dma_int,RT_IPC_CMD_RESET,0);//将信号量归零
 				pOutputBuffer = AudioPlay_GetCurrentBuff();//并获得当前空闲缓冲区的地址
-				
 				if(MP3Decode(mp3decoder,&readptr,&bytesleft,(short*)pOutputBuffer,0))//解码一帧MP3数据 直接解码到I2S的缓冲区里 节约内存
 				{
 				    uart_printf("解码错误\n");
@@ -334,9 +324,8 @@ AudioPlayRes MP3_Play(char* path)
 			}
 		}
 	}
-	
+	MP3FreeDecoder(mp3decoder);
 	Play_Stop();
 	close(fd);
-	
 	return res;
 }
