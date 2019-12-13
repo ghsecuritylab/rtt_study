@@ -5,7 +5,6 @@
 #include "ff.h"
 #include <string.h>
 
-FIL AudioFile;
 AudioPlay_Info AudioPlayInfo;
 uint32_t DualSine12bit[DAC_Buffer_Size];//相当于两个BUFF，前面一个，后面一个，一个buff2304*2个字节
 __IO uint8_t DataRequestFlag = 0;
@@ -20,13 +19,13 @@ void AudioPlay_DataProc(uint16_t* buff,uint16_t num)
 		buff[i] = (((int16_t*)buff)[i] / 16 + 2048);//只取一个声道的数据
 	}
 }
-void Audio_first_play(FIL* Wav_File)//xqy
+void Audio_first_play(int fd)//xqy
 {
-    u32 br;
-    f_read(Wav_File,DualSine12bit,DAC_Buffer_Size*4/2,&br);//填充缓冲区
+    int br;
+    br = read(fd,DualSine12bit,DAC_Buffer_Size*4/2);//填充缓冲区
 	AudioPlay_DataProc((void*)DualSine12bit,DAC_Buffer_Size);
 	Play_Start();
-	f_read(Wav_File,(void*)((uint32_t)DualSine12bit + AudioPlayInfo.BufferSize),DAC_Buffer_Size*4/2,&br);//填充缓冲区
+	br = read(fd,(void*)((uint32_t)DualSine12bit + AudioPlayInfo.BufferSize),DAC_Buffer_Size*4/2);//填充缓冲区
 	AudioPlay_DataProc((void*)((uint32_t)DualSine12bit + AudioPlayInfo.BufferSize),DAC_Buffer_Size);
 }
 void* AudioPlay_GetCurrentBuff(void)
@@ -158,9 +157,9 @@ AudioFileType Audio_CheckFileExtname(char* path)
 	
 	temp ++;
 	
-	if(!strcasecmp(temp,"MP3"))
+	if(!rt_strcasecmp(temp,"MP3"))
 		return AudioFileType_MP3;
-	else if(!strcasecmp(temp,"WAV"))
+	else if(!rt_strcasecmp(temp,"WAV"))
 		return AudioFileType_WAV;
 	
 	return AudioFileType_ERROR;

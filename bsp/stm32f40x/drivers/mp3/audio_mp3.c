@@ -37,13 +37,14 @@ void MonoChannelFill(uint16_t* buf,uint16_t size)
 
 //解析ID3V1
 //option:是否写入信息 如果为0只是查找存不存在
-AudioPlayRes MP3_GetID3v1(FIL* file,MP3_Info *pctrl,unsigned char option)
+AudioPlayRes MP3_GetID3v1(int fd,MP3_Info *pctrl,unsigned char option)
 {
 	ID3V1_Tag *id3v1tag;
 	uint32_t br;
 	
-	f_lseek(file,f_size(file)-128);//偏移到文件结束128字节处
-	f_read(file,MP3_INPUT_BUFFER,128-(4+30+1),&br);//读取文件 忽略年代 备注和流派
+	lseek(fd,-128,SEEK_END);
+	//f_lseek(file,f_size(file)-128);//偏移到文件结束128字节处
+	br = read(fd,MP3_INPUT_BUFFER,128-(4+30+1));//读取文件 忽略年代 备注和流派
 	
 	id3v1tag = (ID3V1_Tag*)MP3_INPUT_BUFFER;
 	
@@ -57,14 +58,14 @@ AudioPlayRes MP3_GetID3v1(FIL* file,MP3_Info *pctrl,unsigned char option)
 	}
 }
 
-AudioPlayRes MP3_GetID3v2(FIL* file,MP3_Info *pMP3info)
+AudioPlayRes MP3_GetID3v2(int fd,MP3_Info *pMP3info)
 {
 	ID3V2_TagHead *taghead;
 	uint32_t br;
 	uint32_t id3v2size;//帧大小
 	
-	f_lseek(file,0);//定位到文件开头
-	f_read(file,MP3_INPUT_BUFFER,sizeof(ID3V2_TagHead),&br);//读取ID3V2标签头
+	lseek(fd,0,SEEK_SET);//定位到文件开头
+	br = read(fd,MP3_INPUT_BUFFER,sizeof(ID3V2_TagHead));//读取ID3V2标签头
 	taghead = (ID3V2_TagHead*)MP3_INPUT_BUFFER;//解析标签头
 	
 	if(strncmp("ID3",(char*)taghead->id,3) == 0)//前3个字符为"ID3"
@@ -87,7 +88,7 @@ AudioPlayRes MP3_GetID3v2(FIL* file,MP3_Info *pMP3info)
 //pctrl:MP3控制信息结构体 
 //返回值:0,成功
 //    其他,失败
-AudioPlayRes MP3_GetInfo(FIL* fmp3,MP3_Info* pMP3info)
+AudioPlayRes MP3_GetInfo(int fd,MP3_Info* pMP3info)
 {
 	MP3FrameInfo frame_info;
 	HMP3Decoder decoder;
@@ -97,29 +98,29 @@ AudioPlayRes MP3_GetInfo(FIL* fmp3,MP3_Info* pMP3info)
 	
 	unsigned char mp3_id3_present = 0;//是否存在ID3V2
 	int offset = 0;//帧同步数据相对数组头的偏移
-	unsigned int br;
+    int br;
 	short samples_per_frame;//一帧的采样个数
 	unsigned int p;//用于识别VBR数据块的指针
 	unsigned int filesize;//文件大小
 	unsigned int totframes;//总帧数
 	
-	filesize = f_size(fmp3);//得到MP3文件大小
+	filesize = lseek(fd,0,SEEK_END);//得到MP3文件大小
 	
-	if(!MP3_GetID3v2(fmp3,pMP3info))//解析ID3V2数据
+	if(!MP3_GetID3v2(fd,pMP3info))//解析ID3V2数据
 	{
 		mp3_id3_present = 1;//存在ID3V2
 		filesize -= pMP3info->DataStartOffset;//如果存在ID3V2 减去它的大小
 	}
 	
-	if(!MP3_GetID3v1(fmp3,pMP3info,!mp3_id3_present))//解析ID3V1数据 不允许覆盖ID3V2
+	if(!MP3_GetID3v1(fd,pMP3info,!mp3_id3_present))//解析ID3V1数据 不允许覆盖ID3V2
 	{
 		filesize -= 128;//如果存在ID3V1 减去它的大小
 	}
 	
 	pMP3info->DataSize = filesize;
 	
-	f_lseek(fmp3,pMP3info->DataStartOffset);//偏移到数据开始的地方
-	f_read(fmp3,MP3_INPUT_BUFFER,MP3_INPUT_BUFFER_SIZE,&br);//读满缓冲区
+	lseek(fd,pMP3info->DataStartOffset,SEEK_SET);//偏移到数据开始的地方
+	br = read(fd,MP3_INPUT_BUFFER,MP3_INPUT_BUFFER_SIZE);//读满缓冲区
 	
 	decoder = MP3InitDecoder();//MP3解码申请内存
 	offset = MP3FindSyncWord(MP3_INPUT_BUFFER,br);//查找帧同步信息
@@ -207,22 +208,20 @@ AudioPlayRes MP3_Play(char* path)
 	uint8_t* readptr;//MP3解码读指针
 	uint16_t* pOutputBuffer;//指向输出缓冲区的指针
 	int32_t offset,bytesleft;//buffer还剩余的有效数据
-	UINT br;
-	FIL* MP3_File;
+	int br;
+	int fd;
 	MP3_Info* MP3Info;
 	
 	MP3Info = &__MP3Info;
-	MP3_File = &AudioFile;
 	memset(MP3Info,0,sizeof(MP3_Info));
-	memset(MP3_File,0,sizeof(FIL));
-	
-	if(f_open(MP3_File,path,FA_READ))//打开文件
+	fd = open(path,O_RDONLY);
+	if(fd == -1)//打开文件
 	{
 		res =  AudioPlay_OpenFileError;//打开文件错误
 	}
 	else//打开成功
 	{
-		res = MP3_GetInfo(MP3_File,MP3Info);//获取文件信息
+		res = MP3_GetInfo(fd,MP3Info);//获取文件信息
 		
 		if(!res)
 		{			
@@ -247,8 +246,9 @@ AudioPlayRes MP3_Play(char* path)
 	{
 		mp3decoder = MP3InitDecoder();//MP3解码器初始化
 		
-		f_lseek(MP3_File,MP3Info->DataStartOffset);//跳过文件头中tag信息
-		if(f_read(MP3_File,MP3_INPUT_BUFFER,MP3_INPUT_BUFFER_SIZE,&br))//填充满缓冲区
+		lseek(fd,MP3Info->DataStartOffset,SEEK_SET);//跳过文件头中tag信息
+		br = read(fd,MP3_INPUT_BUFFER,MP3_INPUT_BUFFER_SIZE);
+		if(br == -1)//填充满缓冲区
 		{
 			res = AudioPlay_ReadFileError;
 		}
@@ -271,7 +271,7 @@ AudioPlayRes MP3_Play(char* path)
 				readptr += offset;//MP3读指针偏移到同步字符处
 				bytesleft -= offset;//buffer里面的有效数据个数 帧同步之前的数据视为无效数据减去
 				
-				MP3Info->CurrentSec = MP3Info->TotalSec * (MP3_File->fptr - MP3Info->DataStartOffset) / MP3Info->DataSize;//计算播放时间
+				MP3Info->CurrentSec = MP3Info->TotalSec * (lseek(fd,0,SEEK_CUR) - MP3Info->DataStartOffset) / MP3Info->DataSize;//计算播放时间
 				
 				AudioPlayInfo.CurrentSec = MP3Info->CurrentSec;
 				
@@ -317,8 +317,8 @@ AudioPlayRes MP3_Play(char* path)
 				if(bytesleft < MAINBUF_SIZE*2)//当数组内容小于2倍MAINBUF_SIZE的时候,必须补充新的数据进来
 				{
 					memmove(MP3_INPUT_BUFFER,readptr,bytesleft);//将输入数组后面剩余的部分移到前面
-					
-					if(f_read(MP3_File, MP3_INPUT_BUFFER+bytesleft, MP3_INPUT_BUFFER_SIZE-bytesleft, &br))//补充余下的数据
+					br = read(fd, MP3_INPUT_BUFFER+bytesleft, MP3_INPUT_BUFFER_SIZE-bytesleft);
+					if(br == -1)//补充余下的数据
 					{
 						res = AudioPlay_ReadFileError;
 					}
@@ -336,7 +336,7 @@ AudioPlayRes MP3_Play(char* path)
 	}
 	
 	Play_Stop();
-	f_close(MP3_File);
+	close(fd);
 	
 	return res;
 }

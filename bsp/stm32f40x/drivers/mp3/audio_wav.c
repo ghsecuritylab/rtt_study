@@ -2,17 +2,17 @@
 #include "audio_wav.h"
 #include <string.h>
 
-AudioPlayRes WAV_GetInfo(FIL* file,Wav_Info* info)
+AudioPlayRes WAV_GetInfo(int fd,Wav_Info* info)
 {
 	uint8_t buf[64];
-	uint32_t br;
+	int br;
 	uint32_t fptr = 0;
 	
 	ChunkFMT *fmt;
 	ChunkHDR *header;
 	
-	f_lseek(file,0);
-	f_read(file,buf,sizeof(buf),&br);//读取32字节
+	lseek(fd,0,SEEK_SET);
+	br = read(fd,buf,sizeof(buf));//读取32字节
 	
 	fptr = 12;//最开始是RIFF块 12bytes
 	
@@ -43,8 +43,8 @@ AudioPlayRes WAV_GetInfo(FIL* file,Wav_Info* info)
 		
 		while(1)
 		{
-			f_lseek(file,fptr);
-			f_read(file,buf,sizeof(buf),&br);//读取32字节
+			lseek(fd,fptr,SEEK_SET);
+			br = read(fd,buf,sizeof(buf));//读取32字节
 			header = (ChunkHDR*) buf;
 			
 			if(header->ChunkID == 0x61746164)
@@ -72,20 +72,18 @@ AudioPlayRes WAV_Play(char* path)
 	AudioPlayRes res = AudioPlay_OK;
 	Wav_Info __info;
 	Wav_Info* WavInfo = NULL;
-	FIL* Wav_File = NULL;
-	UINT br = 0xFFFF;
-	
-	Wav_File = &AudioFile;
+	int br = 0xFFFF;
+	int fd;
 	WavInfo = &__info;
-	
-	if(f_open(Wav_File,path,FA_READ))//打开文件
+	fd = open(path,O_RDONLY);
+	if(fd == -1)//打开文件
 	{
 		res =  AudioPlay_OpenFileError;//打开文件错误
 		uart_printf("打开文件错误\n");
 	}
 	else//打开成功
 	{
-		res = WAV_GetInfo(Wav_File,WavInfo);//获取文件信息
+		res = WAV_GetInfo(fd,WavInfo);//获取文件信息
 		
 		if(res == AudioPlay_OK)
 		{			
@@ -94,7 +92,7 @@ AudioPlayRes WAV_Play(char* path)
 			
 			AudioPlayInfo.Samplerate = WavInfo->Samplerate;
 			AudioPlayInfo.Bitrate = WavInfo->Bitrate/1000;
-			AudioPlayInfo.TotalSec = (f_size(Wav_File) - WavInfo->DataStartOffset) / (WavInfo->Bitrate / WavInfo->Bps * WavInfo->nChannels);
+			AudioPlayInfo.TotalSec = (lseek(fd,0,SEEK_END) - WavInfo->DataStartOffset) / (WavInfo->Bitrate / WavInfo->Bps * WavInfo->nChannels);
 			AudioPlayInfo.BufferSize = DAC_Buffer_Size * 2;
 
 			AudioPlayInfo.Flags |= AUDIO_FLAG_INFO_READY;
@@ -108,9 +106,8 @@ AudioPlayRes WAV_Play(char* path)
 	
 	if(res == AudioPlay_OK)
 	{
-		f_lseek(Wav_File,WavInfo->DataStartOffset);//定位到PWM数据的开始地方
-		//Play_Start();
-		Audio_first_play(Wav_File);
+		lseek(fd,WavInfo->DataStartOffset,SEEK_SET);//定位到PWM数据的开始地方
+		Audio_first_play(fd);
 	}
 	
 	while(res == AudioPlay_OK)
@@ -122,7 +119,7 @@ AudioPlayRes WAV_Play(char* path)
 			break;
 		}
 		
-		AudioPlayInfo.CurrentSec = (Wav_File->fptr - WavInfo->DataStartOffset) / (WavInfo->Bitrate / WavInfo->Bps * WavInfo->nChannels);//计算播放时间
+		AudioPlayInfo.CurrentSec = (lseek(fd,0,SEEK_CUR) - WavInfo->DataStartOffset) / (WavInfo->Bitrate / WavInfo->Bps * WavInfo->nChannels);//计算播放时间
 		
 		//AudioPlay_PendSem();
 		rt_sem_take(dma_int,RT_WAITING_FOREVER);
@@ -136,11 +133,11 @@ AudioPlayRes WAV_Play(char* path)
 		        break;
 		    }
 		}
-		f_read(Wav_File,(unsigned char*)AudioPlay_GetCurrentBuff(),DAC_Buffer_Size*4/2,&br);//填充缓冲区
+		br = read(fd,(unsigned char*)AudioPlay_GetCurrentBuff(),DAC_Buffer_Size*4/2);//填充缓冲区
 		AudioPlay_DataProc(AudioPlay_GetCurrentBuff(),DAC_Buffer_Size);
 	}
 	
 	Play_Stop();
-	f_close(Wav_File);//关闭文件
+	close(fd);//关闭文件
 	return res;
 }
