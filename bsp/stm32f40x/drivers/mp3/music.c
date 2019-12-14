@@ -1,5 +1,5 @@
 #include "audio_common.h"
-//char hellos[630*1024];//__attribute__((section("EXRAM")));
+char hellos[60*1024];//__attribute__((section("EXRAM")));
 #include <rtthread.h>
 
 #define MUSIC_DEBUG
@@ -45,7 +45,6 @@ static void music_service_task(void *param)
         music_log("music_break create fail!\n");
         return ;
     }
-    
     while (1)
     {
         if (rt_mq_recv(music_mq, (void*)&mb_message, sizeof(MESSAGE),RT_WAITING_FOREVER) != RT_EOK)
@@ -63,8 +62,15 @@ static void music_service_task(void *param)
 void music_startup(void)
 {
     rt_thread_t tid;
-
-    tid = rt_thread_create("music_service_task",
+    
+    tid = rt_thread_find("music");
+    if(tid)
+    {
+        rt_kprintf("runing this task\n");
+        return;
+    }
+        
+    tid = rt_thread_create("music",
                            music_service_task, 
                            (void *) 0,
                            2048*5,
@@ -82,6 +88,7 @@ void music_startup(void)
 }
 int music_action(int argc, char ** argv)
 {
+    rt_thread_t tid;
     MESSAGE message_oo;
     if(!music_mq)
     {
@@ -92,6 +99,12 @@ int music_action(int argc, char ** argv)
     {
         music_log("Usage: err\n");
         return -RT_ERROR;
+    }
+    tid = rt_thread_find("music");
+    if(!tid)
+    {
+        rt_kprintf("please run this task\n");
+        return -1;
     }
     if(!strncmp(argv[1],"song",rt_strlen("song")))
     {

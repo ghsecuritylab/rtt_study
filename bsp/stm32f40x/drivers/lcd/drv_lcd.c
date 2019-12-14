@@ -65,6 +65,8 @@ void delay_us(rt_uint32_t nus)
 	}
 }
 
+
+
 void delay_ms(rt_uint32_t nms)
 {
 	//rt_thread_delay((RT_TICK_PER_SECOND * nms + 999) / 1000);
@@ -234,58 +236,83 @@ void ili9341_set_display_direction(rt_uint8_t dir)
 
 	ili9341_set_scan_direction(DFT_SCAN_DIR);
 }
+void LCD_Clear(u16 color)
+{
+	u32 i=0;      
+	u32 pointnum=0;
+	
+	pointnum=480*800; 	 //得到LCD总点数
+	ili9341_set_cursor(0x00,0x00);	       //设置光标位置 
+	ili9341_write_ram_prepare();    		 //开始写入GRAM	 	  
+	for(i=0;i<pointnum;i++)
+	{
+		ili9341_write_data(color);	   
+	}
+}
 
 static void LCD_GPIO_Config(void)
 {
     GPIO_InitTypeDef  GPIO_InitStructure;
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB|RCC_AHB1Periph_GPIOD|RCC_AHB1Periph_GPIOE, ENABLE);//使能IO时钟  
-    RCC_AHB3PeriphClockCmd(RCC_AHB3Periph_FSMC,ENABLE);//使能FSMC时钟  
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD|RCC_AHB1Periph_GPIOE|RCC_AHB1Periph_GPIOF|RCC_AHB1Periph_GPIOG, ENABLE);
+  RCC_AHB3PeriphClockCmd(RCC_AHB3Periph_FSMC,ENABLE);//使能FSMC时钟  
+	
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;        //PF10 推挽输出,控制背光
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;     //输出模式
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;    //推挽输出
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; //100MHz
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;      //上拉
+  GPIO_Init(GPIOF, &GPIO_InitStructure);            //初始化PF10 
+	
+  GPIO_InitStructure.GPIO_Pin = (3<<0)|(3<<4)|(7<<8)|(3<<14); 
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;      //复用输出
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;    //推挽输出
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;      //上拉
+  GPIO_Init(GPIOD, &GPIO_InitStructure);            //初始化  
+	
+  GPIO_InitStructure.GPIO_Pin = (0X1FF<<7);         //PE7~15,AF OUT
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;      //复用输出
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;    //推挽输出
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;      //上拉
+  GPIO_Init(GPIOE, &GPIO_InitStructure);            //初始化  
 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1|GPIO_Pin_11 ;//PB1 推挽输出,控制背光//11控制复位信号的
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//普通输出模式
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;//100MHz
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
-    GPIO_Init(GPIOB, &GPIO_InitStructure);//初始化 //PB15 推挽输出,控制背光
-    
-	
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_4|GPIO_Pin_5|GPIO_Pin_7|GPIO_Pin_8
-																|GPIO_Pin_9|GPIO_Pin_10|GPIO_Pin_13|GPIO_Pin_14|GPIO_Pin_15;//PD0,1,4,5,8,9,10,14,15 AF OUT
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;//复用输出
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
-    GPIO_Init(GPIOD, &GPIO_InitStructure);//初始化  
-	
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7|GPIO_Pin_8|GPIO_Pin_9|GPIO_Pin_10|GPIO_Pin_11|GPIO_Pin_12
-																|GPIO_Pin_13|GPIO_Pin_14|GPIO_Pin_15;//PE7~15,AF OUT
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;//复用输出
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
-    GPIO_Init(GPIOE, &GPIO_InitStructure);//初始化  
-    
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource0,GPIO_AF_FSMC);// 
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource1,GPIO_AF_FSMC);// 
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource4,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource5,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource7,GPIO_AF_FSMC); //和ZET6芯片差异	
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource8,GPIO_AF_FSMC); 
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource9,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource10,GPIO_AF_FSMC);
-	GPIO_PinAFConfig(GPIOD,GPIO_PinSource13,GPIO_AF_FSMC);//和ZET6芯片差异	
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource14,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource15,GPIO_AF_FSMC);// 
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;         //PG2
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;      //复用输出
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;    //推挽输出
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;      //上拉
+  GPIO_Init(GPIOG, &GPIO_InitStructure);            //初始化  
+
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;        //PG12
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;      //复用输出
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;    //推挽输出
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;      //上拉
+  GPIO_Init(GPIOG, &GPIO_InitStructure);            //初始化 
+
+  GPIO_PinAFConfig(GPIOD,GPIO_PinSource0,GPIO_AF_FSMC); 
+  GPIO_PinAFConfig(GPIOD,GPIO_PinSource1,GPIO_AF_FSMC); 
+  GPIO_PinAFConfig(GPIOD,GPIO_PinSource4,GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOD,GPIO_PinSource5,GPIO_AF_FSMC); 
+  GPIO_PinAFConfig(GPIOD,GPIO_PinSource8,GPIO_AF_FSMC); 
+  GPIO_PinAFConfig(GPIOD,GPIO_PinSource9,GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOD,GPIO_PinSource10,GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOD,GPIO_PinSource14,GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOD,GPIO_PinSource15,GPIO_AF_FSMC); 
  
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource7,GPIO_AF_FSMC);//PE7,AF12
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource8,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource9,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource10,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource11,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource12,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource13,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource14,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource15,GPIO_AF_FSMC);//PE15,AF12
+  GPIO_PinAFConfig(GPIOE,GPIO_PinSource7,GPIO_AF_FSMC);  
+  GPIO_PinAFConfig(GPIOE,GPIO_PinSource8,GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOE,GPIO_PinSource9,GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOE,GPIO_PinSource10,GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOE,GPIO_PinSource11,GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOE,GPIO_PinSource12,GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOE,GPIO_PinSource13,GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOE,GPIO_PinSource14,GPIO_AF_FSMC);
+  GPIO_PinAFConfig(GPIOE,GPIO_PinSource15,GPIO_AF_FSMC); 
+ 
+  GPIO_PinAFConfig(GPIOG,GPIO_PinSource2,GPIO_AF_FSMC); 
+  GPIO_PinAFConfig(GPIOG,GPIO_PinSource12,GPIO_AF_FSMC);   
 }
 static void LCD_FSMC_Config(void)
 {
@@ -330,7 +357,6 @@ static void LCD_FSMC_Config(void)
     FSMC_NORSRAMInit(&FSMC_NORSRAMInitStructure);  //初始化FSMC配置
     FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM1, ENABLE);  // 使能BANK1
 }
-
 void _lcd_low_level_init(void)
 {
 	LCD_GPIO_Config();
@@ -605,7 +631,7 @@ void _lcd_low_level_init(void)
     delay_ms(120); 
     WriteComm(0x29); // Display On 
     delay_ms(10);
-	LCD_LED=1;					//点亮背光
+	LCD_BACK=1;	  //点亮背光
 	
 	WriteComm(0x3A); 
 	WriteData(0x55);
@@ -620,8 +646,8 @@ void _lcd_low_level_init(void)
 	    delayms(100);
 	}
 	#endif
-	//Lcd_ColorBox(0,0,800,480,YELLOW);
-    
+	//LCD_Clear(WHITE);        //清屏白色
+    LCD_Clear(0x001F );
 	//LCD_Display_Dir(0);		 	//默认为竖屏
 	
 	//LCD_Clear(WHITE);
