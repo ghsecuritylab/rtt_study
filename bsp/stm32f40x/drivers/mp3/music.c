@@ -1,5 +1,4 @@
 #include "audio_common.h"
-char hellos[60*1024];//__attribute__((section("EXRAM")));
 #include <rtthread.h>
 
 #define MUSIC_DEBUG
@@ -24,7 +23,7 @@ static MESSAGE mb_message;
 
 static void music_service_task(void *param)
 {
-    
+    char file_path[256];
     AudioPlay_Init();
     rt_memset(&mb_message,0,sizeof(MESSAGE));
     music_mq = rt_mq_create("music_mq",100,1,RT_IPC_FLAG_FIFO);
@@ -47,15 +46,16 @@ static void music_service_task(void *param)
     }
     while (1)
     {
-        if (rt_mq_recv(music_mq, (void*)&mb_message, sizeof(MESSAGE),RT_WAITING_FOREVER) != RT_EOK)
+        rt_memset(file_path,0,256);
+        if (rt_mq_recv(music_mq, (void*)&mb_message, sizeof(MESSAGE),1000) != RT_EOK)
         {
-            music_log("music_mQ rt_mb_recv fail!\n");
-            continue;
+            int ret;
+            ret = auto_play("/music/",file_path);
+            if(ret)
+                continue;
         }
-        //music_log("runing song %s\n",mb_message.file_name);
         rt_sem_control(music_break,RT_IPC_CMD_RESET,0);//½«ÐÅºÅÁ¿¹éÁã
-        AudioPlayFile(mb_message.file_name);
-       // music_log("runing song %s over\n",mb_message.file_name);
+        AudioPlayFile(rt_strlen(file_path) >0 ? file_path : mb_message.file_name);
     }
 }
 
@@ -157,6 +157,16 @@ void dac_cmd(int argc, char ** argv)
         //return RT_EOK;
     }
 }
+void dir_cmd(int argc, char ** argv)
+{
+    if (argc != 2)
+    {
+        music_log("Usage: err\n");
+        return;// -RT_ERROR;
+    }
+    //auto_play(argv[1]);
+}
+
 INIT_APP_EXPORT(music_startup);
 
 #ifdef RT_USING_FINSH
@@ -164,6 +174,7 @@ INIT_APP_EXPORT(music_startup);
 MSH_CMD_EXPORT_ALIAS(music_startup, music, ----music_startup----);
 MSH_CMD_EXPORT_ALIAS(music_action,  p,  ----music play control----);
 MSH_CMD_EXPORT_ALIAS(dac_cmd, dac_cmd, ----dac_cmd----);
+//MSH_CMD_EXPORT_ALIAS(dir_cmd, dir, ----dac_cmd----);
 
 #endif
 

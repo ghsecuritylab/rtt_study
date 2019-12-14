@@ -2,8 +2,17 @@
 #include "music.h"
 #include "audio_mp3.h"
 #include "audio_wav.h"
-#include "ff.h"
 #include <string.h>
+#include <dfs.h>
+
+/* directory api*/
+int mkdir(const char *path, mode_t mode);
+DIR *opendir(const char *name);
+struct dirent *readdir(DIR *d);
+long telldir(DIR *d);
+void seekdir(DIR *d, off_t offset);
+void rewinddir(DIR *d);
+int closedir(DIR* d);
 
 AudioPlay_Info AudioPlayInfo;
 uint32_t DualSine12bit[DAC_Buffer_Size];//相当于两个BUFF，前面一个，后面一个，一个buff2304*2个字节
@@ -168,13 +177,16 @@ AudioFileType Audio_CheckFileExtname(char* path)
 void AudioPlayFile(char* path)
 {
     char file_path[256];
-    rt_memset(file_path,0,50);
+    rt_memset(file_path,0,256);
 	memset(&AudioPlayInfo,0,sizeof(AudioPlay_Info));
 	AudioPlay_ClearSem();
 	AudioPlay_ClearBuf();
-	getcwd(file_path,256);
-	if (file_path[rt_strlen(file_path) - 1]  != '/')
+	if(path[0] != '/')
+	{
+	    getcwd(file_path,256);
+	    if (file_path[rt_strlen(file_path) - 1]  != '/')
             strcat(file_path, "/");
+	}
     strcat(file_path, path);
 	switch(Audio_CheckFileExtname(file_path))//判断后缀名来确定播放的音频文件类型
 	{
@@ -190,7 +202,31 @@ void AudioPlayFile(char* path)
 			break;
 	}
 }
-
+int auto_play(char * file_dir_name,char * path)
+{
+    static  DIR * dir = NULL;
+    struct dirent * file_info = NULL;
+    if(!dir)
+    {
+        dir = opendir(file_dir_name);
+        if(!dir)
+        {
+            rt_kprintf("%s is empty\n",file_dir_name);
+            return -1;
+        }
+    }
+    file_info = readdir(dir);
+    if(!file_info)
+    {
+        seekdir(dir,SEEK_SET);
+        file_info = readdir(dir);
+        return -1;
+    }
+    rt_strncpy(path,file_dir_name,rt_strlen(file_dir_name));
+    rt_strncpy(path+rt_strlen(path),file_info->d_name,rt_strlen(file_info->d_name));
+    rt_kprintf("当前文件为=%s\n",path);
+    return 0;
+}
 void AudioPlay_Init(void)
 {
 	NVIC_InitTypeDef				NVIC_InitStructure;
