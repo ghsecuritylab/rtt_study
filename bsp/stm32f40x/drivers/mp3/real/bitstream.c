@@ -246,7 +246,7 @@ int UnpackFrameHeader(MP3DecInfo *mp3DecInfo, unsigned char *buf)
 	if (fh->srIdx == 3 || fh->layer == 4 || fh->brIdx == 15)
 	{
 	    uart_printf("采样率或者比特率错误\n");
-		return -1;
+		//return -1;
 	}
 
 	fh->sfBand = &sfBandTable[fh->ver][fh->srIdx];//取得采样频率	/* for readability (we reference sfBandTable many times in decoder) */

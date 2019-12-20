@@ -1,16 +1,12 @@
 ﻿修改人：xiaqiyun
 修改机型：rt_thread
 修改原因：
-	1. mp3正常播放，暂停，播放，切歌
+	1. 实现mp3自动循环播放
 修改文件:  
-	modified:   .config
-        modified:   drivers/mp3/audio_common.c
-        modified:   drivers/mp3/audio_mp3.c
-        modified:   drivers/mp3/music.c
-        modified:   drivers/usart.c
-        modified:   project.uvguix.mayn
-        modified:   project.uvoptx
-        modified:   project.uvprojx
-        modified:   rtconfig.h
+	modified:   bsp/stm32f40x/drivers/mp3/audio_common.c
+        modified:   bsp/stm32f40x/drivers/mp3/music.c
+        modified:   bsp/stm32f40x/project.uvguix.mayn
+        modified:   bsp/stm32f40x/project.uvoptx
+        modified:   bsp/stm32f40x/project.uvprojx
 
 硬件版本说明：无

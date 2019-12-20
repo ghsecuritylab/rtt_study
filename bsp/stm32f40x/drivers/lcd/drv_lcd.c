@@ -35,25 +35,9 @@ typedef struct
 	volatile rt_uint16_t reg;
 	volatile rt_uint16_t ram;
 } lcd_ili9341_t;
-
-//使用NOR/SRAM的 Bank1.sector1,地址位HADDR[27,26]=00 A18作为数据命令区分线 
-//注意设置时STM32内部会右移一位对其!
-#define LCD_ILI9341_BASE        ((rt_uint32_t)(0x60000000 | 0x0007FFFE))
+//A12作为数据命令区分线  设置时STM32内部会右移一位对齐	    
+#define LCD_ILI9341_BASE        ((rt_uint32_t)(0x6C000000 | 0x00001FFE))
 #define ili9341					((lcd_ili9341_t *) LCD_ILI9341_BASE)
-//////////////////////////////////////////////////////////////////////////////////
-
-//扫描方向定义
-#define L2R_U2D  0 		//从左到右,从上到下
-#define L2R_D2U  1 		//从左到右,从下到上
-#define R2L_U2D  2 		//从右到左,从上到下
-#define R2L_D2U  3 		//从右到左,从下到上
-#define U2D_L2R  4 		//从上到下,从左到右
-#define U2D_R2L  5 		//从上到下,从右到左
-#define D2U_L2R  6 		//从下到上,从左到右
-#define D2U_R2L  7		//从下到上,从右到左	 
-#define DFT_SCAN_DIR  L2R_U2D  //默认的扫描方向
-
-#define	LCD_LED PBout(1)  		//LCD背光    		 PB1 
 
 static lcd_info_t lcddev;
 
@@ -64,8 +48,6 @@ void delay_us(rt_uint32_t nus)
 		__NOP();
 	}
 }
-
-
 
 void delay_ms(rt_uint32_t nms)
 {
@@ -215,263 +197,172 @@ void ili9341_set_backlight(rt_uint8_t pwm)
 	ili9341_write_data(0x00);
 	ili9341_write_data(0x00);
 }
+//屏驱动提供，上面的是其她屏的
+void BlockWrite(unsigned int Xstart,unsigned int Xend,unsigned int Ystart,unsigned int Yend) 
+{
+	WriteComm(0x2a);   
+	WriteData(Xstart>>8);
+	WriteData(Xstart&0xff);
+	WriteData(Xend>>8);
+	WriteData(Xend&0xff);
+
+	WriteComm(0x2b);   
+	WriteData(Ystart>>8);
+	WriteData(Ystart&0xff);
+	WriteData(Yend>>8);
+	WriteData(Yend&0xff);
+	
+	WriteComm(0x2c);
+}
+
+void Lcd_ColorBox(u16 xStart,u16 yStart,u16 xLong,u16 yLong,u16 Color)
+{
+	u32 temp;
+
+	BlockWrite(xStart,xStart+xLong-1,yStart,yStart+yLong-1);
+	for (temp=0; temp<xLong*yLong; temp++)
+	{
+		ili9341->ram=Color; 
+	}
+}
+
+void LCD_Clear(u16 color)
+{
+	Lcd_ColorBox(0,0,LCD_WIDTH,LCD_HIGH,color);
+}
 
 void ili9341_set_display_direction(rt_uint8_t dir)
 {
-	lcddev.dir = dir;
-	if (dir == 0)
-	{
-		lcddev.width = 240;
-		lcddev.height = 320;
-	}
-	else
-	{
-		lcddev.width = 320;
-		lcddev.height = 240;
-	}
 
 	lcddev.wramcmd = 0X2C;
 	lcddev.setxcmd = 0X2A;
 	lcddev.setycmd = 0X2B;
 
-	ili9341_set_scan_direction(DFT_SCAN_DIR);
-}
-void LCD_Clear(u16 color)
-{
-	u32 i=0;      
-	u32 pointnum=0;
-	
-	pointnum=480*800; 	 //得到LCD总点数
-	ili9341_set_cursor(0x00,0x00);	       //设置光标位置 
-	ili9341_write_ram_prepare();    		 //开始写入GRAM	 	  
-	for(i=0;i<pointnum;i++)
-	{
-		ili9341_write_data(color);	   
-	}
-}
-
-static void LCD_GPIO_Config(void)
-{
-    GPIO_InitTypeDef  GPIO_InitStructure;
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD|RCC_AHB1Periph_GPIOE|RCC_AHB1Periph_GPIOF|RCC_AHB1Periph_GPIOG, ENABLE);
-  RCC_AHB3PeriphClockCmd(RCC_AHB3Periph_FSMC,ENABLE);//使能FSMC时钟  
-	
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;        //PF10 推挽输出,控制背光
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;     //输出模式
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;    //推挽输出
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; //100MHz
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;      //上拉
-  GPIO_Init(GPIOF, &GPIO_InitStructure);            //初始化PF10 
-	
-  GPIO_InitStructure.GPIO_Pin = (3<<0)|(3<<4)|(7<<8)|(3<<14); 
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;      //复用输出
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;    //推挽输出
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;      //上拉
-  GPIO_Init(GPIOD, &GPIO_InitStructure);            //初始化  
-	
-  GPIO_InitStructure.GPIO_Pin = (0X1FF<<7);         //PE7~15,AF OUT
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;      //复用输出
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;    //推挽输出
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;      //上拉
-  GPIO_Init(GPIOE, &GPIO_InitStructure);            //初始化  
-
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;         //PG2
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;      //复用输出
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;    //推挽输出
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;      //上拉
-  GPIO_Init(GPIOG, &GPIO_InitStructure);            //初始化  
-
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;        //PG12
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;      //复用输出
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;    //推挽输出
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;      //上拉
-  GPIO_Init(GPIOG, &GPIO_InitStructure);            //初始化 
-
-  GPIO_PinAFConfig(GPIOD,GPIO_PinSource0,GPIO_AF_FSMC); 
-  GPIO_PinAFConfig(GPIOD,GPIO_PinSource1,GPIO_AF_FSMC); 
-  GPIO_PinAFConfig(GPIOD,GPIO_PinSource4,GPIO_AF_FSMC);
-  GPIO_PinAFConfig(GPIOD,GPIO_PinSource5,GPIO_AF_FSMC); 
-  GPIO_PinAFConfig(GPIOD,GPIO_PinSource8,GPIO_AF_FSMC); 
-  GPIO_PinAFConfig(GPIOD,GPIO_PinSource9,GPIO_AF_FSMC);
-  GPIO_PinAFConfig(GPIOD,GPIO_PinSource10,GPIO_AF_FSMC);
-  GPIO_PinAFConfig(GPIOD,GPIO_PinSource14,GPIO_AF_FSMC);
-  GPIO_PinAFConfig(GPIOD,GPIO_PinSource15,GPIO_AF_FSMC); 
- 
-  GPIO_PinAFConfig(GPIOE,GPIO_PinSource7,GPIO_AF_FSMC);  
-  GPIO_PinAFConfig(GPIOE,GPIO_PinSource8,GPIO_AF_FSMC);
-  GPIO_PinAFConfig(GPIOE,GPIO_PinSource9,GPIO_AF_FSMC);
-  GPIO_PinAFConfig(GPIOE,GPIO_PinSource10,GPIO_AF_FSMC);
-  GPIO_PinAFConfig(GPIOE,GPIO_PinSource11,GPIO_AF_FSMC);
-  GPIO_PinAFConfig(GPIOE,GPIO_PinSource12,GPIO_AF_FSMC);
-  GPIO_PinAFConfig(GPIOE,GPIO_PinSource13,GPIO_AF_FSMC);
-  GPIO_PinAFConfig(GPIOE,GPIO_PinSource14,GPIO_AF_FSMC);
-  GPIO_PinAFConfig(GPIOE,GPIO_PinSource15,GPIO_AF_FSMC); 
- 
-  GPIO_PinAFConfig(GPIOG,GPIO_PinSource2,GPIO_AF_FSMC); 
-  GPIO_PinAFConfig(GPIOG,GPIO_PinSource12,GPIO_AF_FSMC);   
+	//ili9341_set_scan_direction(L2R_D2U);
 }
 static void LCD_FSMC_Config(void)
 {
-	FSMC_NORSRAMInitTypeDef  FSMC_NORSRAMInitStructure;
+    GPIO_InitTypeDef  GPIO_InitStructure;
+    FSMC_NORSRAMInitTypeDef  FSMC_NORSRAMInitStructure;
     FSMC_NORSRAMTimingInitTypeDef  readWriteTiming; 
-	FSMC_NORSRAMTimingInitTypeDef  writeTiming;
-	
-    readWriteTiming.FSMC_AddressSetupTime = 0XF;	 //地址建立时间（ADDSET）为16个HCLK 1/168M=6ns*16=96ns	
-    readWriteTiming.FSMC_AddressHoldTime = 0x00;	 //地址保持时间（ADDHLD）模式A未用到	
-    readWriteTiming.FSMC_DataSetupTime = 60;			//数据保存时间为60个HCLK	=6*60=360ns
+    FSMC_NORSRAMTimingInitTypeDef  writeTiming;
+    
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD|RCC_AHB1Periph_GPIOE|RCC_AHB1Periph_GPIOF|RCC_AHB1Periph_GPIOG, ENABLE);
+    RCC_AHB3PeriphClockCmd(RCC_AHB3Periph_FSMC,ENABLE);//使能FSMC时钟  
+    
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10 | GPIO_Pin_14;        //PF10 推挽输出,控制背光
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;     //输出模式
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;    //推挽输出
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; //100MHz
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;      //上拉
+    GPIO_Init(GPIOF, &GPIO_InitStructure);            //初始化PF10 
+      
+    GPIO_InitStructure.GPIO_Pin = (3<<0)|(3<<4)|(7<<8)|(3<<14); 
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;      //复用输出
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;    //推挽输出
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;      //上拉
+    GPIO_Init(GPIOD, &GPIO_InitStructure);            //初始化  
+    
+    GPIO_InitStructure.GPIO_Pin = (0X1FF<<7);         //PE7~15,AF OUT
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;      //复用输出
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;    //推挽输出
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;      //上拉
+    GPIO_Init(GPIOE, &GPIO_InitStructure);            //初始化  
+
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;         //PG2
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;      //复用输出
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;    //推挽输出
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;      //上拉
+    GPIO_Init(GPIOG, &GPIO_InitStructure);            //初始化  
+
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;        //PG12
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;      //复用输出
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;    //推挽输出
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;      //上拉
+    GPIO_Init(GPIOG, &GPIO_InitStructure);            //初始化 
+
+    GPIO_PinAFConfig(GPIOD,GPIO_PinSource0,GPIO_AF_FSMC); 
+    GPIO_PinAFConfig(GPIOD,GPIO_PinSource1,GPIO_AF_FSMC); 
+    GPIO_PinAFConfig(GPIOD,GPIO_PinSource4,GPIO_AF_FSMC);
+    GPIO_PinAFConfig(GPIOD,GPIO_PinSource5,GPIO_AF_FSMC); 
+    GPIO_PinAFConfig(GPIOD,GPIO_PinSource8,GPIO_AF_FSMC); 
+    GPIO_PinAFConfig(GPIOD,GPIO_PinSource9,GPIO_AF_FSMC);
+    GPIO_PinAFConfig(GPIOD,GPIO_PinSource10,GPIO_AF_FSMC);
+    GPIO_PinAFConfig(GPIOD,GPIO_PinSource14,GPIO_AF_FSMC);
+    GPIO_PinAFConfig(GPIOD,GPIO_PinSource15,GPIO_AF_FSMC); 
+   
+    GPIO_PinAFConfig(GPIOE,GPIO_PinSource7,GPIO_AF_FSMC);  
+    GPIO_PinAFConfig(GPIOE,GPIO_PinSource8,GPIO_AF_FSMC);
+    GPIO_PinAFConfig(GPIOE,GPIO_PinSource9,GPIO_AF_FSMC);
+    GPIO_PinAFConfig(GPIOE,GPIO_PinSource10,GPIO_AF_FSMC);
+    GPIO_PinAFConfig(GPIOE,GPIO_PinSource11,GPIO_AF_FSMC);
+    GPIO_PinAFConfig(GPIOE,GPIO_PinSource12,GPIO_AF_FSMC);
+    GPIO_PinAFConfig(GPIOE,GPIO_PinSource13,GPIO_AF_FSMC);
+    GPIO_PinAFConfig(GPIOE,GPIO_PinSource14,GPIO_AF_FSMC);
+    GPIO_PinAFConfig(GPIOE,GPIO_PinSource15,GPIO_AF_FSMC); 
+   
+    GPIO_PinAFConfig(GPIOG,GPIO_PinSource2,GPIO_AF_FSMC); 
+    GPIO_PinAFConfig(GPIOG,GPIO_PinSource12,GPIO_AF_FSMC);   
+
+    readWriteTiming.FSMC_AddressSetupTime = 0XF;   //地址建立时间（ADDSET） 16个HCLK 1/168M=6ns*16=96ns  
+    readWriteTiming.FSMC_AddressHoldTime = 0x00;   //地址保持时间（ADDHLD）
+    readWriteTiming.FSMC_DataSetupTime = 60;           //数据保存时间 60个HCLK = 6*60=360ns
     readWriteTiming.FSMC_BusTurnAroundDuration = 0x00;
     readWriteTiming.FSMC_CLKDivision = 0x00;
     readWriteTiming.FSMC_DataLatency = 0x00;
-    readWriteTiming.FSMC_AccessMode = FSMC_AccessMode_A;	 //模式A 
+    readWriteTiming.FSMC_AccessMode = FSMC_AccessMode_A;   
     
-
-	writeTiming.FSMC_AddressSetupTime =9;	      //地址建立时间（ADDSET）为9个HCLK =54ns 
-    writeTiming.FSMC_AddressHoldTime = 0x00;	 //地址保持时间（A		
-    writeTiming.FSMC_DataSetupTime = 8;		 //数据保存时间为6ns*9个HCLK=54ns
+    writeTiming.FSMC_AddressSetupTime =8;        //地址建立时间（ADDSET）9个HCLK =54ns 
+    writeTiming.FSMC_AddressHoldTime = 0x00;   //地址保持时间 
+    writeTiming.FSMC_DataSetupTime = 7;            //数据保存时间 6ns*9个HCLK=54ns
     writeTiming.FSMC_BusTurnAroundDuration = 0x00;
     writeTiming.FSMC_CLKDivision = 0x00;
     writeTiming.FSMC_DataLatency = 0x00;
-    writeTiming.FSMC_AccessMode = FSMC_AccessMode_A;	 //模式A 
+    writeTiming.FSMC_AccessMode = FSMC_AccessMode_B;   
 
- 
-    FSMC_NORSRAMInitStructure.FSMC_Bank = FSMC_Bank1_NORSRAM1;//  这里我们使用NE1 
-    FSMC_NORSRAMInitStructure.FSMC_DataAddressMux = FSMC_DataAddressMux_Disable; // 不复用数据地址
-    FSMC_NORSRAMInitStructure.FSMC_MemoryType =FSMC_MemoryType_SRAM;// FSMC_MemoryType_SRAM;  //SRAM   
-    FSMC_NORSRAMInitStructure.FSMC_MemoryDataWidth = FSMC_MemoryDataWidth_16b;//存储器数据宽度为16bit   
-    FSMC_NORSRAMInitStructure.FSMC_BurstAccessMode =FSMC_BurstAccessMode_Disable;// FSMC_BurstAccessMode_Disable; 
+    FSMC_NORSRAMInitStructure.FSMC_Bank = FSMC_Bank1_NORSRAM4;  
+    FSMC_NORSRAMInitStructure.FSMC_DataAddressMux = FSMC_DataAddressMux_Disable; 
+    FSMC_NORSRAMInitStructure.FSMC_MemoryType =FSMC_MemoryType_SRAM;
+    FSMC_NORSRAMInitStructure.FSMC_MemoryDataWidth = FSMC_MemoryDataWidth_16b;   //数据宽度为16bit   
+    FSMC_NORSRAMInitStructure.FSMC_BurstAccessMode =FSMC_BurstAccessMode_Disable;
     FSMC_NORSRAMInitStructure.FSMC_WaitSignalPolarity = FSMC_WaitSignalPolarity_Low;
-	FSMC_NORSRAMInitStructure.FSMC_AsynchronousWait=FSMC_AsynchronousWait_Disable; 
+    FSMC_NORSRAMInitStructure.FSMC_AsynchronousWait=FSMC_AsynchronousWait_Disable; 
     FSMC_NORSRAMInitStructure.FSMC_WrapMode = FSMC_WrapMode_Disable;   
     FSMC_NORSRAMInitStructure.FSMC_WaitSignalActive = FSMC_WaitSignalActive_BeforeWaitState;  
-    FSMC_NORSRAMInitStructure.FSMC_WriteOperation = FSMC_WriteOperation_Enable;	//  存储器写使能
+    FSMC_NORSRAMInitStructure.FSMC_WriteOperation = FSMC_WriteOperation_Enable;    //写使能
     FSMC_NORSRAMInitStructure.FSMC_WaitSignal = FSMC_WaitSignal_Disable;   
-    FSMC_NORSRAMInitStructure.FSMC_ExtendedMode = FSMC_ExtendedMode_Enable; // 读写使用不同的时序
+    FSMC_NORSRAMInitStructure.FSMC_ExtendedMode = FSMC_ExtendedMode_Enable;      //读写使用不同的时序
     FSMC_NORSRAMInitStructure.FSMC_WriteBurst = FSMC_WriteBurst_Disable; 
-    FSMC_NORSRAMInitStructure.FSMC_ReadWriteTimingStruct = &readWriteTiming; //读写时序
-    FSMC_NORSRAMInitStructure.FSMC_WriteTimingStruct = &writeTiming;  //写时序
-
-    FSMC_NORSRAMInit(&FSMC_NORSRAMInitStructure);  //初始化FSMC配置
-    FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM1, ENABLE);  // 使能BANK1
+    FSMC_NORSRAMInitStructure.FSMC_ReadWriteTimingStruct = &readWriteTiming;     //读写时序
+    FSMC_NORSRAMInitStructure.FSMC_WriteTimingStruct = &writeTiming;             //写时序
+    FSMC_NORSRAMInit(&FSMC_NORSRAMInitStructure);  //初始化FSMC
+    FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM4, ENABLE);  //使能Bank1           
+    delay_ms(50); 
 }
+void lcd_reset(void)
+{
+    GPIO_ResetBits(GPIOF, GPIO_Pin_14);
+     delay_ms(20);					   
+     GPIO_SetBits(GPIOF, GPIO_Pin_14 );		 	 
+     delay_ms(20);	
+}
+
 void _lcd_low_level_init(void)
 {
-	LCD_GPIO_Config();
     LCD_FSMC_Config();
+    lcd_reset();
+    lcddev.height = LCD_HIGH;
+    lcddev.width  = LCD_WIDTH;
     //重新配置写时序控制寄存器的时序   	 							    
-	FSMC_Bank1E->BWTR[6]&=~(0XF<<0);//地址建立时间（ADDSET）清零 	 
-	FSMC_Bank1E->BWTR[6]&=~(0XF<<8);//数据保存时间清零
-	FSMC_Bank1E->BWTR[6]|=3<<0;		//地址建立时间（ADDSET）为3个HCLK =18ns  	 
-	FSMC_Bank1E->BWTR[6]|=2<<8; 	//数据保存时间为6ns*3个HCLK=18ns
+	FSMC_Bank1E->BWTR[6]&=~(0XF<<0); //地址建立时间清零 	 
+	FSMC_Bank1E->BWTR[6]&=~(0XF<<8); //数据保存时间清零
+	FSMC_Bank1E->BWTR[6]|=3<<0;		   //地址建立时间为3个HCLK =18ns  	 
+	FSMC_Bank1E->BWTR[6]|=2<<8;    	 //数据保存时间为6ns*3个HCLK=18ns
 	delay_ms(50);
-
-	#if 0 /*xqy 2019-12-12*/
-	ili9341_write_reg(0XD3);
-	lcddev.id = ili9341_read_ram();
-	lcddev.id = ili9341_read_ram();
-	lcddev.id = ili9341_read_ram();
-	lcddev.id <<= 8;
-	lcddev.id |= ili9341_read_ram();
-
-	DEBUG_PRINTF(" LCD ID:%x\r\n", lcddev.id); //打印LCD ID   
-
-	ili9341_write_reg(0xCF);
-	ili9341_write_data(0x00);
-	ili9341_write_data(0xC1);
-	ili9341_write_data(0X30);
-	ili9341_write_reg(0xED);
-	ili9341_write_data(0x64);
-	ili9341_write_data(0x03);
-	ili9341_write_data(0X12);
-	ili9341_write_data(0X81);
-	ili9341_write_reg(0xE8);
-	ili9341_write_data(0x85);
-	ili9341_write_data(0x10);
-	ili9341_write_data(0x7A);
-	ili9341_write_reg(0xCB);
-	ili9341_write_data(0x39);
-	ili9341_write_data(0x2C);
-	ili9341_write_data(0x00);
-	ili9341_write_data(0x34);
-	ili9341_write_data(0x02);
-	ili9341_write_reg(0xF7);
-	ili9341_write_data(0x20);
-	ili9341_write_reg(0xEA);
-	ili9341_write_data(0x00);
-	ili9341_write_data(0x00);
-	ili9341_write_reg(0xC0);    //Power control 
-	ili9341_write_data(0x1B);   //VRH[5:0] 
-	ili9341_write_reg(0xC1);    //Power control 
-	ili9341_write_data(0x01);   //SAP[2:0];BT[3:0] 
-	ili9341_write_reg(0xC5);    //VCM control 
-	ili9341_write_data(0x30); 	//3F
-	ili9341_write_data(0x30);   //3C
-	ili9341_write_reg(0xC7);    //VCM control2 
-	ili9341_write_data(0XB7);
-	ili9341_write_reg(0x36);    // memory access control 
-	ili9341_write_data(0x08);   // change here
-	ili9341_write_reg(0x3A);
-	ili9341_write_data(0x55);
-	ili9341_write_reg(0xB1);
-	ili9341_write_data(0x00);
-	ili9341_write_data(0x1A);
-	ili9341_write_reg(0xB6);    //display function control 
-	ili9341_write_data(0x0A);
-	ili9341_write_data(0xA2);
-	ili9341_write_reg(0xF2);    //3gamma function disable 
-	ili9341_write_data(0x00);
-	ili9341_write_reg(0x26);    //gamma curve selected 
-	ili9341_write_data(0x01);
-	ili9341_write_reg(0xE0);    //set gamma 
-	ili9341_write_data(0x0F);
-	ili9341_write_data(0x2A);
-	ili9341_write_data(0x28);
-	ili9341_write_data(0x08);
-	ili9341_write_data(0x0E);
-	ili9341_write_data(0x08);
-	ili9341_write_data(0x54);
-	ili9341_write_data(0XA9);
-	ili9341_write_data(0x43);
-	ili9341_write_data(0x0A);
-	ili9341_write_data(0x0F);
-	ili9341_write_data(0x00);
-	ili9341_write_data(0x00);
-	ili9341_write_data(0x00);
-	ili9341_write_data(0x00);
-	ili9341_write_reg(0XE1);    //set gamma 
-	ili9341_write_data(0x00);
-	ili9341_write_data(0x15);
-	ili9341_write_data(0x17);
-	ili9341_write_data(0x07);
-	ili9341_write_data(0x11);
-	ili9341_write_data(0x06);
-	ili9341_write_data(0x2B);
-	ili9341_write_data(0x56);
-	ili9341_write_data(0x3C);
-	ili9341_write_data(0x05);
-	ili9341_write_data(0x10);
-	ili9341_write_data(0x0F);
-	ili9341_write_data(0x3F);
-	ili9341_write_data(0x3F);
-	ili9341_write_data(0x0F);
-	ili9341_write_reg(0x2B);
-	ili9341_write_data(0x00);
-	ili9341_write_data(0x00);
-	ili9341_write_data(0x01);
-	ili9341_write_data(0x3f);
-	ili9341_write_reg(0x2A);
-	ili9341_write_data(0x00);
-	ili9341_write_data(0x00);
-	ili9341_write_data(0x00);
-	ili9341_write_data(0xef);
-	ili9341_write_reg(0x11); //exit sleep
-	delay_ms(120);
-	ili9341_write_reg(0x29); //display on	
-	ili9341_set_display_direction(0);
-	#else
 	//************* Start Initial Sequence **********//
     WriteComm(0xFF); // EXTC Command Set enable register 
     WriteData(0xFF); 
@@ -618,43 +509,40 @@ void _lcd_low_level_init(void)
     WriteData(0x0F); //P15 
     WriteData(0x00); //P16
 
+    #if 0 /*xqy 2018-6-18*/
+    uart_printf("背光值=%08x\n",LCD_ReadReg(0x52));
+    LCD_WriteReg(0x51,125);
+    #endif
     WriteComm(0x35); //Tearing Effect ON 
     WriteData(0x00); 
 
-    WriteComm(0x36); 
-    WriteData(0x60); 
-
-    WriteComm(0x3A); 
-    WriteData(0x55); 
-
+    WriteComm(0x3A); //用于设置是像素是多少位显示的d6~d4 101:16 110:18 111:24位
+	WriteData(0x55);
+	
+	WriteComm(0x36);//设置扫描方向的，左右，上下
+	if(1)
+	{
+	    WriteData(0x00);//横屏是0x60,竖屏是0x00 
+	}
+	else
+	{
+	    WriteData(0x60);//横屏是0x60,竖屏是0x00 
+	}
+    LCD_BACK=1;					//点亮背光
     WriteComm(0x11); //Exit Sleep 
     delay_ms(120); 
     WriteComm(0x29); // Display On 
-    delay_ms(10);
-	LCD_BACK=1;	  //点亮背光
+    delay_ms(30);
+	//ili9341_set_backlight(255);//背光设置
+	ili9341_set_display_direction(1);
+	LCD_Clear(RED);
 	
-	WriteComm(0x3A); 
-	WriteData(0x55);
-	WriteComm(0x36);
-	WriteData(0xA8);
-	#if 0 /*xqy 2019-12-12*/
-	while(0)
-	{
-	    Lcd_ColorBox(0,0,800,480,YELLOW);
-
-	    DrawPixel(4,4,0xff00);
-	    delayms(100);
-	}
-	#endif
-	//LCD_Clear(WHITE);        //清屏白色
-    LCD_Clear(0x001F );
-	//LCD_Display_Dir(0);		 	//默认为竖屏
-	
-	//LCD_Clear(WHITE);
-	#endif
 }
 
-
+void draw_screen(u16 color)
+{
+    LCD_Clear(color);
+}
 static rt_err_t lcd_init(rt_device_t dev)
 {
 	return RT_EOK;
@@ -706,6 +594,8 @@ static void ili9341_lcd_set_pixel(const char* pixel, int x, int y)
 	ili9341_write_ram_prepare();
 	ili9341->ram = *(uint16_t *)pixel;
 }
+
+
 #ifdef RT_USING_FINSH
 static void lcd_set_pixel(uint16_t color, int x, int y)
 {
@@ -713,6 +603,8 @@ static void lcd_set_pixel(uint16_t color, int x, int y)
 	ili9341_lcd_set_pixel((const char *)&color, x, y);
 }
 FINSH_FUNCTION_EXPORT(lcd_set_pixel, set pixel in lcd display);
+FINSH_FUNCTION_EXPORT(draw_screen, draw_screen);
+
 #endif
 
 static void ili9341_lcd_get_pixel(char* pixel, int x, int y)

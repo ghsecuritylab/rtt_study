@@ -77,10 +77,9 @@ SD_Error SD_Init(void)
 	
 	RCC_APB2PeriphResetCmd(RCC_APB2Periph_SDIO, ENABLE);//SDIO复位
 	
-	
     GPIO_InitStructure.GPIO_Pin =GPIO_Pin_8|GPIO_Pin_9|GPIO_Pin_10|GPIO_Pin_11|GPIO_Pin_12; 	//PC8,9,10,11,12复用功能输出	
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;//复用功能
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;//100M
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100M
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
     GPIO_Init(GPIOC, &GPIO_InitStructure);// PC8,9,10,11,12复用功能输出
