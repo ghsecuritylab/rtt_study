@@ -543,6 +543,106 @@ void draw_screen(u16 color)
 {
     LCD_Clear(color);
 }
+static u32 lcd_dma_tick_start = 0;
+static u32 lcd_dma_tick_end = 0;
+#define HEAP_SIZE_SRAM 500*1024
+static u8 sram_heap[HEAP_SIZE_SRAM] __attribute__((aligned(4)));
+static u16 color_data __attribute__((aligned(4))) = 0;
+void fmsc_dma_write_data(u16* lcd_data,u32 len,u8 flag/*lcd_data 地址是否增长 0不，1增长*/)
+{
+    DMA_InitTypeDef            DMA_InitStructure;
+	NVIC_InitTypeDef				NVIC_InitStructure;
+	
+    rt_kprintf("fmsc_dma_init enter\n");
+	DMA_DeInit(DMA2_Stream1);//清空之前该stream4上的所有中断标志
+	//两个DMA，每个8个数据流，每个数据流有8个通道
+    while (DMA_GetCmdStatus(DMA2_Stream1) != DISABLE){}//等待DMA可配置 
+    
+	DMA_InitStructure.DMA_Channel = DMA_Channel_0;  //通道选择
+	DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)lcd_data;//外部ram数据地址
+	DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)&(ili9341->ram);//LCD屏的数据地址
+	DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToMemory;//内存到内存
+	DMA_InitStructure.DMA_BufferSize = len;//
+	if(flag)
+	    DMA_InitStructure.DMA_PeripheralInc = DMA_MemoryInc_Enable;//FMSC ram增加
+    else
+        DMA_InitStructure.DMA_PeripheralInc = DMA_MemoryInc_Disable;//FMSC ram增加
+	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Disable;//LCD->RAM自动增加关闭
+	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;//半字传输16位
+	DMA_InitStructure.DMA_MemoryDataSize = DMA_PeripheralDataSize_HalfWord;
+	DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;//应该是周期模式
+	DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;//优先级非常高
+    DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;         
+    DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;
+    DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;//存储器突发单次传输
+    DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;//外设突发单次传输
+	DMA_Init(DMA2_Stream1, &DMA_InitStructure);
+	
+	DMA_ClearITPendingBit(DMA2_Stream1,DMA_IT_TCIF1); 
+	DMA_ITConfig(DMA2_Stream1,DMA_IT_TC,ENABLE);
+	NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream1_IRQn;//设置DMA中断
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+	NVIC_Init(&NVIC_InitStructure);
+	DMA_Cmd(DMA2_Stream1, ENABLE);
+	lcd_dma_tick_start = rt_tick_get();
+	rt_kprintf("fmsc_dma start\n");
+}
+void DMA2_Stream1_IRQHandler(void)
+{
+    rt_interrupt_enter();
+    //rt_sem_release(dma_int);
+    lcd_dma_tick_end = rt_tick_get();
+    rt_kprintf("DMA2_Stream1_IRQHandler tick:%d\n",lcd_dma_tick_end - lcd_dma_tick_start);
+	if(DMA_GetITStatus(DMA2_Stream1,DMA_IT_TCIF1))//传输完成中断标志
+    {
+        rt_kprintf("全完成\n");
+    }
+	else if(DMA_GetITStatus(DMA2_Stream1,DMA_IT_HTIF1))//传输一半完成中断标志
+	{
+        rt_kprintf("半完成\n");
+    }
+	DMA_ClearITPendingBit(DMA2_Stream1,DMA_IT_TCIF1);
+	//rt_interrupt_leave();
+}
+void sram_zroe_speed_test(void)
+{
+    u32 s_tick = 0;
+    u32 e_tick = 0;
+    s_tick = rt_tick_get();
+    rt_memset((void*)0x68000000,0,1024*1024);
+    e_tick = rt_tick_get();
+    rt_kprintf("sram_zroe_speed_test tick :%d\n",e_tick - s_tick);
+}
+void fmsc_dma_test(u16 color,u8 flag)//flag 0:内部ram中的单色不递增数据,1:外部ram中的单色 2:外部ram递增
+{
+    u16 color_1 = color;
+    if(flag ==0)
+    {
+        rt_kprintf("内部ram不递增\n");
+        BlockWrite(0,0+480-1,0,0+845-1);
+        fmsc_dma_write_data(&color_1,480*845,0);
+    }
+    else if(flag ==1 )
+    {
+        rt_kprintf("外部ram不递增\n");
+        color_data = color;
+        BlockWrite(0,0+480-1,0,0+845-1);
+        fmsc_dma_write_data(&color_data,480*845,0);
+    }
+    else if(flag == 2)
+    {
+        u32 e_tick = 0;
+        u32 s_tick = rt_tick_get();
+        rt_memset(sram_heap,0x0,480*845*2);
+        e_tick = rt_tick_get();
+        rt_kprintf("memset tick :%d\n",e_tick - s_tick);
+        BlockWrite(0,0+480-1,0,0+845-1);
+        fmsc_dma_write_data((u16*)sram_heap,480*845,1);
+    }
+    return ;
+}
 static rt_err_t lcd_init(rt_device_t dev)
 {
 	return RT_EOK;
@@ -604,6 +704,7 @@ static void lcd_set_pixel(uint16_t color, int x, int y)
 }
 FINSH_FUNCTION_EXPORT(lcd_set_pixel, set pixel in lcd display);
 FINSH_FUNCTION_EXPORT(draw_screen, draw_screen);
+FINSH_FUNCTION_EXPORT(fmsc_dma_test, void fmsc_dma_test u16 color u8 flag flag 0:内部ram中的单色不递增数据 1:外部ram中的单色 2:外部ram递增 );
 
 #endif
 
