@@ -14,7 +14,7 @@
 
 #ifdef RT_USING_PIN
 
-#define STM32_PIN_NUMBERS 100 //[48, 64, 100, 144 ]
+#define STM32_PIN_NUMBERS 144 //[48, 64, 100, 144 ]
 
 #define __STM32_PIN(index, rcc, gpio, gpio_index) { 0, RCC_##rcc##Periph_GPIO##gpio, GPIO##gpio, GPIO_Pin_##gpio_index}//
 //##表示把两个宏参数贴合在一起，而单个#的功能是将其后面的宏参数进行字符串化操作xqy
@@ -893,6 +893,17 @@ void EXTI15_10_IRQHandler(void)
     if (EXTI_GetITStatus(EXTI_Line11) != RESET)
     {
         pin_irq_hdr(11);
+        //XPT2046_Scan(1);
+        if(GPIO_ReadInputDataBit(GPIOF,GPIO_Pin_11))
+        {
+            //rt_kprintf("up+++\n");
+        }
+        else
+        {
+            //rt_kprintf("down+++\n");
+        }
+        
+        
     }
     if (EXTI_GetITStatus(EXTI_Line12) != RESET)
     {

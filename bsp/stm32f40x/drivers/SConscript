@@ -33,6 +33,9 @@ CPPPATH += [cwd + '/mp3/pub/']
 src += Glob(cwd+'/sram/*.c')
 CPPPATH += [cwd + '/sram/']
 
+src += Glob(cwd+'/touch/*.c')
+CPPPATH += [cwd + '/touch/']
+
 # add Ethernet drivers.
 if GetDepend('RT_USING_LWIP'):
     src += Glob(cwd + '/eth/*.c')

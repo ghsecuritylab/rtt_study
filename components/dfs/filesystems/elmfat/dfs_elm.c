@@ -814,7 +814,7 @@ int elm_init(void)
 
     return 0;
 }
-INIT_COMPONENT_EXPORT(elm_init);
+INIT_DEVICE_EXPORT(elm_init);
 
 /*
  * RT-Thread Device Interface for ELM FatFs

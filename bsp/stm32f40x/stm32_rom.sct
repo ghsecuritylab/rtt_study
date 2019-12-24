@@ -13,7 +13,7 @@ LR_IROM1 0x08000000 0x00100000  {    ; load region size_region
   }
   RW_IRAM2 0x68000000 0x00100000  {  ; RW data
    music.o(+RW +ZI)
-   drv_lcd.o(+RW +ZI)
+   board.o(+RW +ZI)
   }
   RW_IRAM3 0x10000000 0x00010000  {  ; RW data
    .ANY
