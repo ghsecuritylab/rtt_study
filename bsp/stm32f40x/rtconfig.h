@@ -265,4 +265,6 @@
 #define RT_USING_UART1
 #define RT_USING_UART2
 
+#define RT_MUSIC_VS1003
+#define RT_MUSIC_SOFT_DECODE //»ÌΩ‚
 #endif

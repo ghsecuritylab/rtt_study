@@ -236,7 +236,6 @@ void EXTIF11_Init(void)
 	
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);//使能SYSCFG时钟
 	
- 
 	SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOF, EXTI_PinSource11);//PF11 连接到中断线11
     /* 配置EXTI_Line11 */
     EXTI_InitStructure.EXTI_Line = EXTI_Line11;//LINE11

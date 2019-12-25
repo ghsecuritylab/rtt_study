@@ -410,6 +410,7 @@ rt_err_t stm32_spi_register(SPI_TypeDef * SPI,
 */
 
 #define RT_USING_SPI1
+//#define RT_USING_SPI2
 static void rt_hw_spi_init(void)
 {
 #ifdef RT_USING_SPI1
@@ -447,23 +448,91 @@ static void rt_hw_spi_init(void)
         static struct stm32_spi_cs  spi_cs;
 
         GPIO_InitTypeDef GPIO_InitStructure;
-
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
 
-        /* spi21: PG10 */
         spi_cs.GPIOx = GPIOG;//w25qxx的片选信号
         spi_cs.GPIO_Pin = GPIO_Pin_8;
 
         GPIO_InitStructure.GPIO_Pin = spi_cs.GPIO_Pin;
-        
         GPIO_Init(spi_cs.GPIOx, &GPIO_InitStructure);
-
         GPIO_SetBits(spi_cs.GPIOx, spi_cs.GPIO_Pin);
 
         rt_spi_bus_attach_device(&spi_device, "spi10", "spi1", (void*)&spi_cs);
     }
 #endif /* RT_USING_SPI1 */
+
+#ifdef RT_USING_SPI2 //使用来连接VS1003的spi通信，虚拟出两个spi口，一个用于spi数据传输，一个命令传输
+/*
+       #define VS_MISO        PC2   
+       #define VS_MOSI        PC3   
+       #define VS_SCLK        PB13 
+       
+       #define VS_XCS         PC13  
+       #define VS_XDCS        PC0
+*/
+     /* register spi bus */
+    {
+        static struct stm32_spi_bus stm32_spi_2;
+        GPIO_InitTypeDef GPIO_InitStructure;
+
+        /* Enable GPIO clock */
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);//使能GPIOB时钟
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);//使能GPIOG时钟  CS脚
+        
+        GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;//
+        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;//复用功能
+        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
+        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
+        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
+        GPIO_Init(GPIOB, &GPIO_InitStructure);//初始化
+
+        GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_2;
+        GPIO_Init(GPIOC, &GPIO_InitStructure);//初始化
+        
+        GPIO_PinAFConfig(GPIOB,GPIO_PinSource13,GPIO_AF_SPI2); 
+    	GPIO_PinAFConfig(GPIOC,GPIO_PinSource2,GPIO_AF_SPI2); 
+    	GPIO_PinAFConfig(GPIOC,GPIO_PinSource3,GPIO_AF_SPI2); 
+     
+    	//这里只针对SPI口初始化
+    	RCC_APB1PeriphResetCmd(RCC_APB1Periph_SPI2,ENABLE);//复位SPI2
+    	RCC_APB1PeriphResetCmd(RCC_APB1Periph_SPI2,DISABLE);//停止复位SPI2
+
+        stm32_spi_register(SPI2, &stm32_spi_2, "spi2");//注册spi总线，一个spi外设就可以虚拟为一条总线，
+                                                     //该总线上可以挂载无数个spi设备，通讯方式都是一样的
+                                                     //只是每个设备的cs脚不同，所有设备分时公用该spi外设
+    }
+    /* attach cs *///为这个spi设备设置个cs，并连接到总线上，这里的设备也是一个虚拟的spi设备
+    {
+        static struct rt_spi_device spi_device_2_xcs;
+        static struct stm32_spi_cs  spi_cs_2_xcs;//命令控制传输
+
+        static struct rt_spi_device spi_device_2_xdcs;
+        static struct stm32_spi_cs  spi_cs_2_xdcs;//数据传输
+        
+        GPIO_InitTypeDef GPIO_InitStructure;
+        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+
+        spi_cs_2_xcs.GPIOx = GPIOC;//w25qxx的片选信号
+        spi_cs_2_xcs.GPIO_Pin = GPIO_Pin_13;
+
+        GPIO_InitStructure.GPIO_Pin = spi_cs_2_xcs.GPIO_Pin;
+        GPIO_Init(spi_cs_2_xcs.GPIOx, &GPIO_InitStructure);
+        GPIO_SetBits(spi_cs_2_xcs.GPIOx, spi_cs_2_xcs.GPIO_Pin);
+
+        rt_spi_bus_attach_device(&spi_device_2_xcs, "spi20", "spi2", (void*)&spi_cs_2_xcs);//vs1003命令传输接口
+
+        spi_cs_2_xdcs.GPIOx = GPIOC;//w25qxx的片选信号
+        spi_cs_2_xdcs.GPIO_Pin = GPIO_Pin_0;
+
+        GPIO_InitStructure.GPIO_Pin = spi_cs_2_xdcs.GPIO_Pin;
+        GPIO_Init(spi_cs_2_xdcs.GPIOx, &GPIO_InitStructure);
+        GPIO_SetBits(spi_cs_2_xdcs.GPIOx, spi_cs_2_xcs.GPIO_Pin);
+
+        rt_spi_bus_attach_device(&spi_cs_2_xdcs, "spi21", "spi2", (void*)&spi_cs_2_xdcs);//vs1003数据传输接口
+    }
+#endif/* RT_USING_SPI2 */
 }
 INIT_BOARD_EXPORT(rt_hw_spi_init);
 
