@@ -167,7 +167,7 @@ void dir_cmd(int argc, char ** argv)
     //auto_play(argv[1]);
 }
 
-INIT_APP_EXPORT(music_startup);
+//INIT_APP_EXPORT(music_startup);
 
 #ifdef RT_USING_FINSH
 #include <finsh.h>

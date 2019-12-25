@@ -207,7 +207,7 @@ void main_thread_entry(void *parameter)
     else
         rt_kprintf("w25qxx File System initialzation failed!\n");
 #endif
-
+    sram_zroe_speed_test();
 
     
 

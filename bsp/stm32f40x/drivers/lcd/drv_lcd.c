@@ -240,7 +240,7 @@ void ili9341_set_display_direction(rt_uint8_t dir)
 
 	//ili9341_set_scan_direction(L2R_D2U);
 }
-static void LCD_FSMC_Config(void)
+void LCD_FSMC_Config(void)
 {
     GPIO_InitTypeDef  GPIO_InitStructure;
     FSMC_NORSRAMInitTypeDef  FSMC_NORSRAMInitStructure;
@@ -308,6 +308,7 @@ static void LCD_FSMC_Config(void)
     GPIO_PinAFConfig(GPIOG,GPIO_PinSource2,GPIO_AF_FSMC); 
     GPIO_PinAFConfig(GPIOG,GPIO_PinSource12,GPIO_AF_FSMC);   
 
+#if 0
     readWriteTiming.FSMC_AddressSetupTime = 0XF;   //µØÖ·½¨Á¢Ê±¼ä£¨ADDSET£© 16¸öHCLK 1/168M=6ns*16=96ns  
     readWriteTiming.FSMC_AddressHoldTime = 0x00;   //µØÖ·±£³ÖÊ±¼ä£¨ADDHLD£©
     readWriteTiming.FSMC_DataSetupTime = 60;           //Êý¾Ý±£´æÊ±¼ä 60¸öHCLK = 6*60=360ns
@@ -322,8 +323,16 @@ static void LCD_FSMC_Config(void)
     writeTiming.FSMC_BusTurnAroundDuration = 0x00;
     writeTiming.FSMC_CLKDivision = 0x00;
     writeTiming.FSMC_DataLatency = 0x00;
-    writeTiming.FSMC_AccessMode = FSMC_AccessMode_B;   
-
+    writeTiming.FSMC_AccessMode = FSMC_AccessMode_A;   
+#else
+    readWriteTiming.FSMC_AddressSetupTime = 0x00;	 //µØÖ·½¨Á¢Ê±¼ä£¨ADDSET£©Îª1¸öHCLK 1/36M=27ns
+    readWriteTiming.FSMC_AddressHoldTime = 0x00;	 //µØÖ·±£³ÖÊ±¼ä£¨ADDHLD£©Ä£Ê½AÎ´ÓÃµ½	
+    readWriteTiming.FSMC_DataSetupTime = 0x0b;		 ////Êý¾Ý±£³ÖÊ±¼ä£¨DATAST£©Îª9¸öHCLK 6*9=54ns	 	 
+    readWriteTiming.FSMC_BusTurnAroundDuration = 0x00;
+    readWriteTiming.FSMC_CLKDivision = 0x00;
+    readWriteTiming.FSMC_DataLatency = 0x00;
+    readWriteTiming.FSMC_AccessMode = FSMC_AccessMode_A;	 //Ä£Ê½A 
+#endif
     FSMC_NORSRAMInitStructure.FSMC_Bank = FSMC_Bank1_NORSRAM4;  
     FSMC_NORSRAMInitStructure.FSMC_DataAddressMux = FSMC_DataAddressMux_Disable; 
     FSMC_NORSRAMInitStructure.FSMC_MemoryType =FSMC_MemoryType_SRAM;
@@ -338,7 +347,7 @@ static void LCD_FSMC_Config(void)
     FSMC_NORSRAMInitStructure.FSMC_ExtendedMode = FSMC_ExtendedMode_Enable;      //¶ÁÐ´Ê¹ÓÃ²»Í¬µÄÊ±Ðò
     FSMC_NORSRAMInitStructure.FSMC_WriteBurst = FSMC_WriteBurst_Disable; 
     FSMC_NORSRAMInitStructure.FSMC_ReadWriteTimingStruct = &readWriteTiming;     //¶ÁÐ´Ê±Ðò
-    FSMC_NORSRAMInitStructure.FSMC_WriteTimingStruct = &writeTiming;             //Ð´Ê±Ðò
+    FSMC_NORSRAMInitStructure.FSMC_WriteTimingStruct = &readWriteTiming;             //Ð´Ê±Ðò
     FSMC_NORSRAMInit(&FSMC_NORSRAMInitStructure);  //³õÊ¼»¯FSMC
     FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM4, ENABLE);  //Ê¹ÄÜBank1           
     delay_ms(50); 
@@ -353,7 +362,7 @@ void lcd_reset(void)
 
 void _lcd_low_level_init(void)
 {
-    LCD_FSMC_Config();
+    //LCD_FSMC_Config();
     lcd_reset();
     lcddev.height = LCD_HIGH;
     lcddev.width  = LCD_WIDTH;
@@ -545,9 +554,13 @@ void draw_screen(u16 color)
 }
 static u32 lcd_dma_tick_start = 0;
 static u32 lcd_dma_tick_end = 0;
-#define HEAP_SIZE_SRAM 500*1024
-static u8 sram_heap[HEAP_SIZE_SRAM] __attribute__((aligned(4)));
+#define HEAP_SIZE_SRAM 500//*1024
+u8 sram_heap[HEAP_SIZE_SRAM]={0};// __attribute__((aligned(4)));
 static u16 color_data __attribute__((aligned(4))) = 0;
+
+u8 src_addr[500*1024] = {0};
+u8 dst_addr[100] = {0};
+
 void fmsc_dma_write_data(u16* lcd_data,u32 len,u8 flag/*lcd_data µØÖ·ÊÇ·ñÔö³¤ 0²»£¬1Ôö³¤*/)
 {
     DMA_InitTypeDef            DMA_InitStructure;
@@ -564,12 +577,59 @@ void fmsc_dma_write_data(u16* lcd_data,u32 len,u8 flag/*lcd_data µØÖ·ÊÇ·ñÔö³¤ 0²
 	DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToMemory;//ÄÚ´æµ½ÄÚ´æ
 	DMA_InitStructure.DMA_BufferSize = len;//
 	if(flag)
-	    DMA_InitStructure.DMA_PeripheralInc = DMA_MemoryInc_Enable;//FMSC ramÔö¼Ó
+	    DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Enable;//FMSC ramÔö¼Ó
     else
-        DMA_InitStructure.DMA_PeripheralInc = DMA_MemoryInc_Disable;//FMSC ramÔö¼Ó
+        DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;//FMSC ramÔö¼Ó
 	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Disable;//LCD->RAM×Ô¶¯Ôö¼Ó¹Ø±Õ
 	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;//°ë×Ö´«Êä16Î»
-	DMA_InitStructure.DMA_MemoryDataSize = DMA_PeripheralDataSize_HalfWord;
+	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord;
+	DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;//Ó¦¸ÃÊÇÖÜÆÚÄ£Ê½
+	DMA_InitStructure.DMA_Priority = DMA_Priority_High;//ÓÅÏÈ¼¶·Ç³£¸ß
+    DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;         
+    DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;
+    DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;//´æ´¢Æ÷Í»·¢µ¥´Î´«Êä
+    DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;//ÍâÉèÍ»·¢µ¥´Î´«Êä
+	DMA_Init(DMA2_Stream1, &DMA_InitStructure);
+	
+	DMA_ClearITPendingBit(DMA2_Stream1,DMA_IT_TCIF1); 
+	DMA_ITConfig(DMA2_Stream1,DMA_IT_TC,ENABLE);
+	NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream1_IRQn;//ÉèÖÃDMAÖÐ¶Ï
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+	NVIC_Init(&NVIC_InitStructure);
+	DMA_Cmd(DMA2_Stream1, ENABLE);
+	lcd_dma_tick_start = rt_tick_get();
+	rt_kprintf("fmsc_dma start\n");
+}
+
+void fmsc_dma_t(u8 flag)
+{
+    DMA_InitTypeDef            DMA_InitStructure;
+	NVIC_InitTypeDef				NVIC_InitStructure;
+    u8 buff_1 = 0xf1;
+	rt_memset(src_addr,0,HEAP_SIZE_SRAM);
+    rt_kprintf("fmsc_dma_init enter\n");
+    BlockWrite(0,0+480-1,400,0+845-1);
+	DMA_DeInit(DMA2_Stream1);//Çå¿ÕÖ®Ç°¸Ãstream4ÉÏµÄËùÓÐÖÐ¶Ï±êÖ¾
+	//Á½¸öDMA£¬Ã¿¸ö8¸öÊý¾ÝÁ÷£¬Ã¿¸öÊý¾ÝÁ÷ÓÐ8¸öÍ¨µÀ
+    while (DMA_GetCmdStatus(DMA2_Stream1) != DISABLE){}//µÈ´ýDMA¿ÉÅäÖÃ 
+    
+	DMA_InitStructure.DMA_Channel = DMA_Channel_0;  //Í¨µÀÑ¡Ôñ
+	if(flag)
+	    DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)src_addr;//Íâ²¿ramÊý¾ÝµØÖ·
+    else
+        DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)&buff_1;
+	DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)&(ili9341->ram);//(uint32_t)sram_heap;//LCDÆÁµÄÊý¾ÝµØÖ·
+	DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToMemory;//ÄÚ´æµ½ÄÚ´æ
+	DMA_InitStructure.DMA_BufferSize = 65535;//
+	if(flag)
+	    DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Enable;//FMSC ramÔö¼Ó
+    else
+        DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;//FMSC ramÔö¼Ó
+	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Disable;//LCD->RAM×Ô¶¯Ôö¼Ó¹Ø±Õ
+	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;//°ë×Ö´«Êä16Î»
+	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord;
 	DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;//Ó¦¸ÃÊÇÖÜÆÚÄ£Ê½
 	DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;//ÓÅÏÈ¼¶·Ç³£¸ß
     DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;         
@@ -589,6 +649,7 @@ void fmsc_dma_write_data(u16* lcd_data,u32 len,u8 flag/*lcd_data µØÖ·ÊÇ·ñÔö³¤ 0²
 	lcd_dma_tick_start = rt_tick_get();
 	rt_kprintf("fmsc_dma start\n");
 }
+
 void DMA2_Stream1_IRQHandler(void)
 {
     rt_interrupt_enter();
@@ -604,18 +665,21 @@ void DMA2_Stream1_IRQHandler(void)
         rt_kprintf("°ëÍê³É\n");
     }
 	DMA_ClearITPendingBit(DMA2_Stream1,DMA_IT_TCIF1);
-	//rt_interrupt_leave();
+	printf_format(sram_heap,100);
+	rt_interrupt_leave();
 }
 void sram_zroe_speed_test(void)
 {
     u32 s_tick = 0;
     u32 e_tick = 0;
+    u8  data_1 = 0;
+	lcd_dma_tick_start = rt_tick_get();
     s_tick = rt_tick_get();
-    rt_memset((void*)0x68000000,0,1024*1024);
+    rt_memset(sram_heap,0,HEAP_SIZE_SRAM);
     e_tick = rt_tick_get();
-    rt_kprintf("sram_zroe_speed_test tick :%d\n",e_tick - s_tick);
+    rt_kprintf("--------------------sram_zroe_speed_test tick :%d ,end :%d  start:%d\n",e_tick - s_tick,e_tick,s_tick);
 }
-void fmsc_dma_test(u16 color,u8 flag)//flag 0:ÄÚ²¿ramÖÐµÄµ¥É«²»µÝÔöÊý¾Ý,1:Íâ²¿ramÖÐµÄµ¥É« 2:Íâ²¿ramµÝÔö
+void fmsc_dma_test(u16 color,u8 flag,u32 len)//flag 0:ÄÚ²¿ramÖÐµÄµ¥É«²»µÝÔöÊý¾Ý,1:Íâ²¿ramÖÐµÄµ¥É« 2:Íâ²¿ramµÝÔö
 {
     u16 color_1 = color;
     if(flag ==0)
@@ -629,17 +693,18 @@ void fmsc_dma_test(u16 color,u8 flag)//flag 0:ÄÚ²¿ramÖÐµÄµ¥É«²»µÝÔöÊý¾Ý,1:Íâ²¿ra
         rt_kprintf("Íâ²¿ram²»µÝÔö\n");
         color_data = color;
         BlockWrite(0,0+480-1,0,0+845-1);
-        fmsc_dma_write_data(&color_data,480*845,0);
+        fmsc_dma_write_data(&color_data,len,0);
     }
     else if(flag == 2)
     {
         u32 e_tick = 0;
         u32 s_tick = rt_tick_get();
-        rt_memset(sram_heap,0x0,480*845*2);
+        rt_memset(src_addr,0x0,2*480*30);
+        rt_memset(src_addr+2*480*30,0xff,2*480*30);
         e_tick = rt_tick_get();
         rt_kprintf("memset tick :%d\n",e_tick - s_tick);
-        BlockWrite(0,0+480-1,0,0+845-1);
-        fmsc_dma_write_data((u16*)sram_heap,480*845,1);
+        BlockWrite(0,0+480-1,100,0+845-1);
+        fmsc_dma_write_data((u16*)src_addr,len,1);
     }
     return ;
 }
@@ -704,7 +769,9 @@ static void lcd_set_pixel(uint16_t color, int x, int y)
 }
 FINSH_FUNCTION_EXPORT(lcd_set_pixel, set pixel in lcd display);
 FINSH_FUNCTION_EXPORT(draw_screen, draw_screen);
+FINSH_FUNCTION_EXPORT(fmsc_dma_t, fmsc_dma_t);
 FINSH_FUNCTION_EXPORT(fmsc_dma_test, void fmsc_dma_test u16 color u8 flag flag 0:ÄÚ²¿ramÖÐµÄµ¥É«²»µÝÔöÊý¾Ý 1:Íâ²¿ramÖÐµÄµ¥É« 2:Íâ²¿ramµÝÔö );
+
 
 #endif
 

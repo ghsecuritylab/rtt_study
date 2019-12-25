@@ -93,6 +93,7 @@ void rt_hw_board_init()
 
     /* Configure the SysTick */
     SysTick_Configuration();
+    LCD_FSMC_Config();
     FSMC_SRAM_Init();//必须放到堆初始化前面，不然堆初始化会死机
 #ifdef RT_USING_HEAP
     rt_system_heap_init((void*)STM32_SRAM_BEGIN, (void*)STM32_SRAM_END);//使用内部sram作为堆
@@ -105,7 +106,7 @@ void rt_hw_board_init()
 #ifdef RT_USING_CONSOLE
     rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
 #endif	
-    sram_zroe_speed_test();
+    
 }
 
 /*@}*/

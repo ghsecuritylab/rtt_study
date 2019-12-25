@@ -249,6 +249,5 @@
 #define SOC_STM32F4
 #define RT_USING_UART1
 #define RT_USING_UART2
-#define RT_USING_UART3
 
 #endif
