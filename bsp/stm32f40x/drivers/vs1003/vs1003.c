@@ -3,6 +3,7 @@
 //     其他的微处理器(带SPI接口的)只需稍加修改即可适用；
 
 #include "vs1003.h"
+#include <string.h>
 
 #define vs1003_printf rt_kprintf
 #define CS_DEVICE_NAME "spi20"
@@ -13,6 +14,7 @@ struct rt_spi_device *vs1003_cs_device = NULL;//命令设备
 struct rt_spi_device *vs1003_dcs_device = NULL;//数据设备
 //后面如果考虑性能，可以将命令传输直接操作spi,因为交替操作比较频繁的话，
 //两个设备在传输的时候还要重新配置spi，虽然他们的配置都是相同的
+void vs_spi_dma_stop();
 
 static u8 vs1003_data_buff[VS_1003_BUFF_LEN];
 static u8 spi_dma_status = 0;
@@ -58,6 +60,7 @@ void vs1003_spi_dma_init(void)
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 	NVIC_Init(&NVIC_InitStructure);
 	DMA_Cmd(DMA1_Stream4, ENABLE);//打开该SPI的控制器流
+	vs_spi_dma_stop();
 }
 
 void vs_spi_dma_stop()
@@ -400,8 +403,11 @@ void VS_Flush_Buffer()
  - 返回说明：无
  ******************************************************************/
 
-void VS_sin_test(unsigned char x)
+void vs_sin_test(unsigned char x)
 { 
+    vs_io_init();
+    vs1003_spi_init();
+    VS_Reset();
     VS_Write_Reg(0x00,0x08,0x20);//启动测试，向0号寄存器写入0x0820   SM_SDINEW为1   SM_TEST为1
     while(!vs_dreq_status());   //等待DREQ变为高电平
     xdcs_cs(0);	        //打开数据片选 SDI有效
@@ -425,6 +431,60 @@ void VS_sin_test(unsigned char x)
     SPI_Write_Byte_vs(0);
     xdcs_cs(1);	    //关闭数据片选 ，SDI无效
 } 
+u8 song_buff[320];
+void vs_music_test(int argc, char ** argv)
+{
+    char file_path[100];
+    int data_len = 0;
+    int ret;
+    int fd;
+    if (argc < 2)
+    {
+        rt_kprintf("Usage: err\n");
+        return ;
+    }
+    rt_memset(file_path,0,100);
+    getcwd(file_path,100);
+    if (file_path[rt_strlen(file_path) - 1] != '/')
+        strcat(file_path, "/");
+    strcat(file_path, argv[1]);
+    fd = open(file_path,O_RDONLY);
+    if(fd == -1)//打开文件
+	{
+	    rt_kprintf("open file fail\n");
+		return ;//打开文件错误
+	}
+	vs_io_init();
+    vs1003_spi_init();
+    VS_Reset();
+	while(1)
+	{
+	    ret = read(fd,song_buff,320);//填充缓冲区
+	    data_len = 0;
+	    while(1)
+	    {
+	        int i;
+	        while(!vs_dreq_status());   //等待DREQ变为高电平
+	        xdcs_cs(0);
+	        for(i=0;i<32;i++)
+	            SPI_Write_Byte_vs(song_buff[data_len+i]);
+            data_len += 32;
+            xdcs_cs(1);
+            if(data_len >=320)
+            {
+                //rt_kprintf(" data over \n");
+                break;
+            }
+	    }
+	}
+    
+}
+#ifdef RT_USING_FINSH
+#include <finsh.h>
+FINSH_FUNCTION_EXPORT(vs_sin_test, vs_sin_test);
+MSH_CMD_EXPORT(vs_music_test, vs_music_test);
+
+#endif
 
 /******************************************************************
  - 功能描述：为VS1003打补丁，获得实时频谱
