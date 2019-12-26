@@ -6,7 +6,7 @@
 #include "spi.h"
 #include <stdlib.h>
 #include <rtthread.h>
-//vs1003相关宏定义 
+//vs1003寄存器相关宏定义 
 #define VS_WRITE_COMMAND 0x02    //写命令
 #define VS_READ_COMMAND  0x03    //读命令
 #define SPI_MODE         0x00    //控制模式   
@@ -40,25 +40,6 @@
 #define SM_ADPCM        0x1000   
 #define SM_ADPCM_HP     0x2000 */
 
-#if 0 /*xqy 2019-12-25*/
-#define MP3_XRESET   ( 1 << 0)
-#define Mp3PutInReset()  { P5OUT &= ~MP3_XRESET; }  //xReset = 0
- 
-#define Mp3ReleaseFromReset()  { P5OUT |= MP3_XRESET; }//xReset = 1
- 
-#define MP3_XCS  ( 1 << 4)
-#define Mp3SelectControl()  {P5OUT &= ~MP3_XCS; }//xCS = 0
- 
-#define Mp3DeselectControl()  {P5OUT |= MP3_XCS; }//xCS = 1
- 
-#define MP3_XDCS ( 1 << 5 )
-
-#define Mp3SelectData()		{ P5OUT &= ~MP3_XDCS; }//xDCS = 0
-
-#define Mp3DeselectData()	{ P5OUT |= MP3_XDCS; }//xDCS = 1
-
-#define MP3_DREQ ( 1 << 6 )
-#endif
 
 //#define SPIWait()	while((IFG2&UTXIFG1)==0);//等待...直到发送中断标志位置位                 //{ while((S0SPSR & 0x80) == 0); }//等待SPI将数据发送完毕
 //#define SPI_RESULT_BYTE  S0SPDR                                              
@@ -72,4 +53,6 @@ void VS_Flush_Buffer(); //清空VS1003的数据缓冲区
 void VS_sin_test(unsigned char x); //正弦测试
 void LoadPatch(); //为VS1003打补丁
 
+int vs_auto_play(char * file_dir_name,char * path);
+void vs_spi_dma_stop();
 #endif

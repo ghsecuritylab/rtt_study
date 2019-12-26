@@ -1,21 +1,30 @@
 //文件名：vs1003.c
-//功能：vs1003 的底层驱动程序，主控芯片为msp340-149；
+//功能：vs1003 的底层驱动程序，主控芯片为stm32f4；
 //     其他的微处理器(带SPI接口的)只需稍加修改即可适用；
-
+#include <rtthread.h>
+#include <rtdevice.h>
 #include "vs1003.h"
 #include <string.h>
+#include <dfs.h>
+#include <dfs_posix.h>
 
 #define vs1003_printf rt_kprintf
+#define MUSIC_DEBUG
+#ifdef MUSIC_DEBUG
+#define music_log(fmt,arg...) rt_kprintf("MUSIC->%s - L:%d  "fmt"\n",__FUNCTION__, __LINE__, ##arg);
+#else
+#define music_log
+#endif
+
+#if 0 /*xqy 2019-12-26*/
 #define CS_DEVICE_NAME "spi20"
 #define DCS_DEVICE_NAME "spi21"
-#define VS_1003_BUFF_LEN 4*1024
-
 struct rt_spi_device *vs1003_cs_device = NULL;//命令设备
 struct rt_spi_device *vs1003_dcs_device = NULL;//数据设备
 //后面如果考虑性能，可以将命令传输直接操作spi,因为交替操作比较频繁的话，
 //两个设备在传输的时候还要重新配置spi，虽然他们的配置都是相同的
-void vs_spi_dma_stop();
-
+#endif
+#define VS_1003_BUFF_LEN 4*1024
 static u8 vs1003_data_buff[VS_1003_BUFF_LEN];
 static u8 spi_dma_status = 0;
 u8 vs_dma_status(void)
@@ -80,22 +89,7 @@ void pc6_gpio_int_handler(void)
     vs_spi_dma_stop();
 }
 
-void DMA1_Stream4_IRQHandler(void)
-{
-    rt_interrupt_enter();
-    //rt_sem_release(dma_int);
-    //DataRequestFlag = 1;
-	if(DMA_GetITStatus(DMA1_Stream4,DMA_IT_TCIF4))//传输完成中断标志
-    {
-       // DataRequestFlag = 1;
-    }
-	else if(DMA_GetITStatus(DMA1_Stream5,DMA_IT_HTIF5))//传输一半完成中断标志
-	{
-       // DataRequestFlag = 2;
-    }
-	DMA_ClearITPendingBit(DMA1_Stream5,DMA_IT_TCIF5 | DMA_IT_HTIF5);
-	rt_interrupt_leave();
-}
+
 
 void vs1003_spi_init(void)
 { 
@@ -394,6 +388,14 @@ void VS_Flush_Buffer()
     }
     xdcs_cs(1);        //关闭数据片选
 }
+
+void vs1003_init(void)
+{
+    vs_io_init();
+    vs1003_spi_init();
+    VS_Reset();
+    return ;
+}
 /******************************************************************
  - 功能描述：正弦测试，这是测试VS1003芯片是否正常的有效手段！！
  - 隶属模块：VS1003B模块
@@ -430,7 +432,24 @@ void vs_sin_test(unsigned char x)
     SPI_Write_Byte_vs(0);
     SPI_Write_Byte_vs(0);
     xdcs_cs(1);	    //关闭数据片选 ，SDI无效
-} 
+}
+void DMA1_Stream4_IRQHandler(void)
+{
+    rt_interrupt_enter();
+    //rt_sem_release(dma_int);
+    //DataRequestFlag = 1;
+	if(DMA_GetITStatus(DMA1_Stream4,DMA_IT_TCIF4))//传输完成中断标志
+    {
+       // DataRequestFlag = 1;
+    }
+	else if(DMA_GetITStatus(DMA1_Stream5,DMA_IT_HTIF5))//传输一半完成中断标志
+	{
+       // DataRequestFlag = 2;
+    }
+	DMA_ClearITPendingBit(DMA1_Stream5,DMA_IT_TCIF5 | DMA_IT_HTIF5);
+	rt_interrupt_leave();
+}
+
 u8 song_buff[320];
 void vs_music_test(int argc, char ** argv)
 {
@@ -483,23 +502,186 @@ void vs_music_test(int argc, char ** argv)
 #include <finsh.h>
 FINSH_FUNCTION_EXPORT(vs_sin_test, vs_sin_test);
 MSH_CMD_EXPORT(vs_music_test, vs_music_test);
+#endif
+
+typedef struct 
+{
+    char file_name[50];
+}MESSAGE;
+
+#define RT_MUSIC_THREAD_PRIORITY 5
+
+
+static rt_mq_t vs_music_mq = RT_NULL;
+rt_sem_t vs_dma_int = RT_NULL;
+rt_sem_t vs_music_break = RT_NULL;
+static MESSAGE vs_mb_message;
+static void vs_music_service_task(void *param)
+{
+    char file_path[256];
+    rt_memset(&vs_mb_message,0,sizeof(MESSAGE));
+    vs_music_mq = rt_mq_create("vs_music_mq",100,1,RT_IPC_FLAG_FIFO);
+    if (vs_music_mq == RT_NULL)
+    {
+        music_log("music_mb create fail!\n");
+        return ;
+    }
+    vs_dma_int = rt_sem_create("vs_dma_int",0,RT_IPC_FLAG_FIFO);
+    if (vs_dma_int == RT_NULL)
+    {
+        music_log("dma_int create fail!\n");
+        return ;
+    }
+    vs_music_break = rt_sem_create("vs_music_break",0,RT_IPC_FLAG_FIFO);
+    if (vs_music_break == RT_NULL)
+    {
+        music_log("music_break create fail!\n");
+        return ;
+    }
+    vs1003_init();
+    while (1)
+    {
+        rt_memset(file_path,0,256);
+        if (rt_mq_recv(vs_music_mq, (void*)&vs_mb_message, sizeof(MESSAGE),1000) != RT_EOK)
+        {
+            int ret;
+            ret = vs_auto_play("/music/",file_path);
+            if(ret)
+                continue;
+        }
+        rt_sem_control(vs_music_break,RT_IPC_CMD_RESET,0);//将信号量归零
+        AudioPlayFile(rt_strlen(file_path) >0 ? file_path : vs_mb_message.file_name);
+    }
+}
+int vs_auto_play(char * file_dir_name,char * path)
+{
+    static  DIR * dir = NULL;
+    struct dirent * file_info = NULL;
+    if(!dir)
+    {
+        dir = opendir(file_dir_name);
+        if(!dir)
+        {
+            rt_kprintf("%s is empty\n",file_dir_name);
+            return -1;
+        }
+    }
+    file_info = readdir(dir);
+    if(!file_info)
+    {
+        seekdir(dir,SEEK_SET);
+        file_info = readdir(dir);
+        return -1;
+    }
+    rt_strncpy(path,file_dir_name,rt_strlen(file_dir_name));
+    rt_strncpy(path+rt_strlen(path),file_info->d_name,rt_strlen(file_info->d_name));
+    rt_kprintf("当前文件为=%s\n",path);
+    return 0;
+}
+
+void vs_music_startup(void)
+{
+    rt_thread_t tid;
+    
+    tid = rt_thread_find("vs1003");
+    if(tid)
+    {
+        rt_kprintf("runing this task\n");
+        return;
+    }
+        
+    tid = rt_thread_create("vs1003",
+                           vs_music_service_task, 
+                           (void *) 0,
+                           2048,
+                           RT_MUSIC_THREAD_PRIORITY,
+                           20);
+    if (tid != RT_NULL)
+    {
+        rt_thread_startup(tid);
+        music_log("music_service_task init done...\n");
+    }
+    else
+    {
+        music_log("music_service_task init fail...\n");
+    }
+}
+int vs_music_action(int argc, char ** argv)
+{
+    rt_thread_t tid;
+    MESSAGE message_oo;
+    if(!vs_music_mq)
+    {
+        music_log("please init music service task first\n");
+        return -RT_ERROR;
+    }
+    if (argc < 2)
+    {
+        music_log("Usage: err\n");
+        return -RT_ERROR;
+    }
+    tid = rt_thread_find("vs1003");
+    if(!tid)
+    {
+        rt_kprintf("please run this task\n");
+        return -1;
+    }
+    if(!strncmp(argv[1],"song",rt_strlen("song")))
+    {
+        rt_err_t err;
+        if(argc < 3)
+        {
+            music_log("please input the name of songs\n");
+            return -RT_ERROR;
+        }
+        rt_sem_release(vs_dma_int);
+        rt_sem_release(vs_music_break);
+        rt_memset(&message_oo,0,sizeof(MESSAGE));
+        rt_strncpy(message_oo.file_name,argv[2],rt_strlen(argv[2]));
+        err = rt_mq_send(vs_music_mq,(void*)&message_oo,sizeof(MESSAGE));
+        if(err == RT_EOK)
+        {
+            //music_log("rt_mq_send done!\n");
+        }
+        else
+        {
+            //music_log("rt_mq_send fail!\n");
+            return -RT_ERROR;
+        }
+        return RT_EOK;
+    }
+    if(!strncmp(argv[1],"stop",rt_strlen("stop")))
+    {
+        rt_err_t err;
+        rt_sem_release(vs_dma_int);
+        rt_sem_release(vs_music_break);
+        return RT_EOK;
+    }
+ return 0;
+}
+void vs_1003_cmd(int argc, char ** argv)
+{
+    if (argc != 2)
+    {
+        music_log("Usage: err\n");
+        return;
+    }
+    if(!strncmp(argv[1],"run",rt_strlen("run")))
+    {
+        Play_Start();
+    }
+    if(!strncmp(argv[1],"stop",rt_strlen("st")))
+    {
+        Play_Stop();
+    }
+}
+//INIT_APP_EXPORT(music_startup);
+
+#ifdef RT_USING_FINSH
+#include <finsh.h>
+MSH_CMD_EXPORT_ALIAS(vs_music_startup,vs, vs_music_startup vs1003任务);
+MSH_CMD_EXPORT_ALIAS(vs_music_action,  vscmd,  vscmd);
+MSH_CMD_EXPORT_ALIAS(vs_1003_cmd, vsspi, vsspi);
 
 #endif
 
-/******************************************************************
- - 功能描述：为VS1003打补丁，获得实时频谱
-             注：atab与dtab是VS1003频谱功能补丁码，在patch.h中
- - 隶属模块：VS1003B模块
- - 函数属性：外部，用户可调用
- - 参数说明：无    
- - 返回说明：无
- ******************************************************************/
-
-/*void LoadPatch() 
-{
- unsigned int i;
- for(i=0;i<943;i++)
- {
-  VS_Write_Reg(atab[i],dtab[i]>>8,dtab[i]&0xff);
- }
-}*/
