@@ -55,4 +55,5 @@ void LoadPatch(); //ÎªVS1003´ò²¹¶¡
 
 int vs_auto_play(char * file_dir_name,char * path);
 void vs_spi_dma_stop();
+void xdcs_cs(u8 status);
 #endif

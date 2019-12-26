@@ -74,23 +74,24 @@ void vs1003_spi_dma_init(void)
 
 void vs_spi_dma_stop()
 {
+    SPI_Cmd(SPI2, DISABLE);
     SPI_I2S_DMACmd(SPI2,SPI_I2S_DMAReq_Tx,DISABLE);
+    xdcs_cs(1);
     spi_dma_status = 0;
 }
 void vs_spi_dma_start()
 {
+    xdcs_cs(0);
+    SPI_Cmd(SPI2, ENABLE);
     SPI_I2S_DMACmd(SPI2,SPI_I2S_DMAReq_Tx,ENABLE);
     spi_dma_status = 1;
 }
 
 void pc6_gpio_int_handler(void)
 {
-    vs1003_printf("pc6_gpio_int_handler\n");
+    vs1003_printf("c6\n");
     vs_spi_dma_stop();
 }
-
-
-
 void vs1003_spi_init(void)
 { 
     #if 0 /*xqy 2019-12-25*/
@@ -433,24 +434,59 @@ void vs_sin_test(unsigned char x)
     SPI_Write_Byte_vs(0);
     xdcs_cs(1);	    //关闭数据片选 ，SDI无效
 }
+int temp_fd = 0;
+static rt_timer_t timer1;
+
 void DMA1_Stream4_IRQHandler(void)
 {
-    rt_interrupt_enter();
+    //rt_interrupt_enter();
     //rt_sem_release(dma_int);
     //DataRequestFlag = 1;
+    
 	if(DMA_GetITStatus(DMA1_Stream4,DMA_IT_TCIF4))//传输完成中断标志
     {
        // DataRequestFlag = 1;
+       rt_kprintf("tc\n");
+       if(temp_fd)
+       {
+            u32 ret;
+            ret = read(temp_fd,vs1003_data_buff+2048,2048);
+            if(ret!=2048)
+            {
+                rt_kprintf("data over\n");
+                vs_spi_dma_stop();
+            }
+       }
+            
     }
 	else if(DMA_GetITStatus(DMA1_Stream5,DMA_IT_HTIF5))//传输一半完成中断标志
 	{
+	    rt_kprintf("ht\n");
        // DataRequestFlag = 2;
+       if(temp_fd)
+       {
+            u32 ret;
+            ret = read(temp_fd,vs1003_data_buff,2048);
+            if(ret!=2048)
+            {
+                rt_kprintf("data over\n");
+                vs_spi_dma_stop();
+            }
+       }
     }
 	DMA_ClearITPendingBit(DMA1_Stream5,DMA_IT_TCIF5 | DMA_IT_HTIF5);
-	rt_interrupt_leave();
+	//rt_interrupt_leave();
 }
 
 u8 song_buff[320];
+void time_out_deal(void)
+{
+    rt_kprintf("r\n");
+    if(vs_dreq_status())
+    {
+        vs_spi_dma_start();
+    }
+}
 void vs_music_test(int argc, char ** argv)
 {
     char file_path[100];
@@ -473,10 +509,30 @@ void vs_music_test(int argc, char ** argv)
 	    rt_kprintf("open file fail\n");
 		return ;//打开文件错误
 	}
+	timer1 = rt_timer_create("vs_timer_app",
+                             time_out_deal,
+                             RT_NULL,
+                             10,
+                             RT_TIMER_FLAG_PERIODIC | RT_TIMER_FLAG_SOFT_TIMER);
+    if (timer1 != RT_NULL)
+    {
+        rt_timer_start(timer1);
+    }
+    else
+    {
+        rt_kprintf("rt_timer_create fail\n");
+        return ;
+    }
 	vs_io_init();
     vs1003_spi_init();
     VS_Reset();
-	while(1)
+    temp_fd = fd;
+    read(fd,vs1003_data_buff,4096);
+    xdcs_cs(0);
+    vs1003_spi_dma_init();
+    vs_spi_dma_start();
+    rt_kprintf("rt_timer_create ok\n");
+	while(0)
 	{
 	    ret = read(fd,song_buff,320);//填充缓冲区
 	    data_len = 0;
@@ -508,7 +564,12 @@ typedef struct
 {
     char file_name[50];
 }MESSAGE;
-
+typedef struct 
+{
+    int fd;
+    int file_len;
+    char file_name[30];
+}VS_CTL;
 #define RT_MUSIC_THREAD_PRIORITY 5
 
 
@@ -516,6 +577,7 @@ static rt_mq_t vs_music_mq = RT_NULL;
 rt_sem_t vs_dma_int = RT_NULL;
 rt_sem_t vs_music_break = RT_NULL;
 static MESSAGE vs_mb_message;
+VS_CTL vs_ctl;
 static void vs_music_service_task(void *param)
 {
     char file_path[256];
@@ -542,7 +604,7 @@ static void vs_music_service_task(void *param)
     while (1)
     {
         rt_memset(file_path,0,256);
-        if (rt_mq_recv(vs_music_mq, (void*)&vs_mb_message, sizeof(MESSAGE),1000) != RT_EOK)
+        if (rt_mq_recv(vs_music_mq, (void*)&vs_mb_message, sizeof(MESSAGE),RT_WAITING_FOREVER) != RT_EOK)
         {
             int ret;
             ret = vs_auto_play("/music/",file_path);
