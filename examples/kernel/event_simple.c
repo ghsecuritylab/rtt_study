@@ -1,10 +1,10 @@
 /*
- * 程序清单：事件例程
+ * 程序清单：事件例�?
  *
- * 这个程序会创建3个动态线程及初始化一个静态事件对象
+ * 这个程序会创�?个动态线程及初始化一个静态事件对�?
  * 一个线程等于事件对象上以接收事件；
- * 一个线程定时发送事件 (事件3)
- * 一个线程定时发送事件 (事件5)
+ * 一个线程定时发送事�?(事件3)
+ * 一个线程定时发送事�?(事件5)
  */
 #include <rtthread.h>
 #include <time.h>
@@ -15,7 +15,7 @@ static rt_thread_t tid1 = RT_NULL;
 static rt_thread_t tid2 = RT_NULL;
 static rt_thread_t tid3 = RT_NULL;
 
-/* 事件控制块 */
+/* 事件控制�?*/
 static struct rt_event event;
 
 /* 线程1入口函数 */
@@ -74,7 +74,7 @@ static void thread3_entry(void *param)
 
 int event_simple_init()
 {
-    /* 初始化事件对象 */
+    /* 初始化事件对�?*/
     rt_event_init(&event, "event", RT_IPC_FLAG_FIFO);
 
     /* 创建线程1 */
@@ -124,10 +124,10 @@ static void _tc_cleanup()
     /* 执行事件对象脱离 */
     rt_event_detach(&event);
 
-    /* 调度器解锁 */
+    /* 调度器解�?*/
     rt_exit_critical();
 
-    /* 设置TestCase状态 */
+    /* 设置TestCase状�?*/
     tc_done(TC_STAT_PASSED);
 }
 
@@ -137,10 +137,10 @@ int _tc_event_simple()
     tc_cleanup(_tc_cleanup);
     event_simple_init();
 
-    /* 返回TestCase运行的最长时间 */
+    /* 返回TestCase运行的最长时�?*/
     return 100;
 }
-/* 输出函数命令到finsh shell中 */
+/* 输出函数命令到finsh shell�?*/
 FINSH_FUNCTION_EXPORT(_tc_event_simple, a simple event example);
 #else
 /* 用户应用入口 */

@@ -40,11 +40,6 @@
 #define SM_ADPCM        0x1000   
 #define SM_ADPCM_HP     0x2000 */
 
-
-//#define SPIWait()	while((IFG2&UTXIFG1)==0);//等待...直到发送中断标志位置位                 //{ while((S0SPSR & 0x80) == 0); }//等待SPI将数据发送完毕
-//#define SPI_RESULT_BYTE  S0SPDR                                              
-//#define Mp3SetVolume(leftchannel,rightchannel)  {Mp3WriteRegister(11,(leftchannel),(rightchannel));}//音量设置 
-		
 void VS_Reset(); //VS1003软复位及初始化
 void VS_Write_Reg(unsigned char addr,unsigned char hdat,unsigned char ldat); //向VS1003的功能寄存器写入一个字
 unsigned int VS_Read_Reg(unsigned char addr); //从VS1003的功能寄存器读取一个字
@@ -55,5 +50,7 @@ void LoadPatch(); //为VS1003打补丁
 
 int vs_auto_play(char * file_dir_name,char * path);
 void vs_spi_dma_stop();
-void xdcs_cs(u8 status);
+void vs_xdcs_cs(u8 status);
+int dev_audio_play(char* file_name);
+int vs_auto_play(char * file_dir_name);
 #endif
