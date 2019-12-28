@@ -52,4 +52,5 @@ void vs_spi_dma_stop();
 void vs_xdcs_cs(u8 status);
 int dev_audio_play(char* file_name);
 int vs_auto_play(char * file_dir_name);
+unsigned char SPI_Write_Byte_vs(unsigned char byte);
 #endif

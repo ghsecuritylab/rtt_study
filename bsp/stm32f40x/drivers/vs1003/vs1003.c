@@ -16,10 +16,10 @@
 #define music_log
 #endif
 
-#define RT_VS1003_THREAD_PRIORITY 25
-#define VS_1003_BUFF_LEN 4*1024
+#define RT_VS1003_THREAD_PRIORITY 5
+#define VS_1003_BUFF_LEN 1//4*1024
 #define VS_FLIE_NAME_LEN 128
-#define VS_FLIE_BUFFER_LEN 320
+#define VS_FLIE_BUFFER_LEN 512
 
 typedef struct 
 {
@@ -28,11 +28,12 @@ typedef struct
 typedef struct 
 {
     int fd;//文件句柄
-    
+    int vs_status;
     int play_way;//循环播放或单曲
     int file_len;
+    int data_len;//buffer中的数据长度
     char file_name[VS_FLIE_NAME_LEN];
-    //char data_buffer[];
+    char data_buffer[VS_FLIE_BUFFER_LEN];
 }VS_CTL;
 
 static u8 vs1003_data_buff[VS_1003_BUFF_LEN];
@@ -43,6 +44,7 @@ static u8 spi_dma_status = 0;
 #define VS_DMA_TC_EVENT (1<<2)//DMA完成事件
 #define VS_DMA_HT_EVENT (1<<3)//DMA半完成事件
 #define VS_PLAY_OVER_EVENT (1<<4)//DMA半完成事件
+#define VS_DATA_OVER_EVENT (1<<4)//数据为空事件
 
 #define VS_PLAY_SHOOT 0
 #define VS_PLAY_CIRCLE 1
@@ -159,7 +161,7 @@ void vs_spi_init(void)
     SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
     /* baudrate *///外设总线频率为84MHZ，32分频，则再除以32可以得到SPI主频
     //先往低的来，怕vs1003接收不来，OK了再升频率
-    SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_16;
+    SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_8;
     SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
     /* CPHA */
     SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;
@@ -238,6 +240,21 @@ s32 vs_dreq_status(void)//vs1003是否还有空间接收数据，高电平:有空间，低电平:无空
 {
     return GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_6);
 }
+s32 vs_set_status(u8 status)
+{
+    rt_base_t level;
+    level = rt_hw_interrupt_disable();
+    vs_ctl.vs_status = status;
+    rt_hw_interrupt_enable(level);
+}
+s32 vs_get_status(void)
+{
+    return vs_ctl.vs_status;
+}
+void vs_soft_reset(void)
+{
+    
+}
 void vs_reset_cmd(u8 status)
 {
     if(status)
@@ -278,7 +295,16 @@ void vs_xdcs_cs(u8 status)
         
     }
 }
-
+void vs_spi_write_bytes(unsigned char *data,int len)
+{ 
+    int i;
+    vs_xdcs_cs(0);
+    for(i=0;i<len;i++)
+    {
+        SPI_Write_Byte_vs(data[i]);
+    }
+    vs_xdcs_cs(1);
+}
 /**********************************************************/
 /*  函数名称 :  SPIPutChar                                */
 /*  函数功能 ： 通过SPI发送一个字节的数据                 */
@@ -406,7 +432,6 @@ void vs1003_init(void)
     vs_io_init();
     vs_spi_init();
     VS_Reset();
-    //vs_spi_dma_init();
     return ;
 }
 /******************************************************************
@@ -420,9 +445,9 @@ void vs1003_init(void)
 
 void vs_sin_test(unsigned char x)
 { 
-    //vs_io_init();
+    vs_io_init();
     vs_spi_init();
-    //VS_Reset();
+    VS_Reset();
     VS_Write_Reg(0x00,0x08,0x20);//启动测试，向0号寄存器写入0x0820   SM_SDINEW为1   SM_TEST为1
     while(!vs_dreq_status());   //等待DREQ变为高电平
     vs_xdcs_cs(0);	        //打开数据片选 SDI有效
@@ -524,9 +549,10 @@ u8 time_flag = 0;
 static void vs_music_service_task(void *param)
 {
     rt_err_t ret;
-    int tick_1 = 0;
     rt_uint32_t recved;
-    rt_memset(&vs_ctl,0,sizeof(VS_CTL));
+
+    vs1003_init();
+    vs_ctl.play_way = 1;
     rt_memset(&vs_event,0,sizeof(struct rt_event));
     ret = rt_event_init(&vs_event, "vs_event", RT_IPC_FLAG_FIFO);
     if(ret!=RT_EOK)
@@ -534,90 +560,71 @@ static void vs_music_service_task(void *param)
         rt_kprintf("rt_event_init fail\n");
         return ;
     }
-    rt_kprintf("rt_event_init ok\n");
-    vs1003_init();
-    
     while (1)
     {
-        #if 1
-        if(rt_event_recv(&vs_event,VS_START_EVENT | VS_STOP_EVENT | VS_DMA_TC_EVENT | VS_DMA_HT_EVENT |VS_PLAY_OVER_EVENT,
+        if(rt_event_recv(&vs_event,VS_START_EVENT | VS_STOP_EVENT  | VS_PLAY_OVER_EVENT,
                             RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR,
-                            rt_tick_from_millisecond(20),&recved)!= RT_EOK);
+                            rt_tick_from_millisecond(20),&recved)!= RT_EOK)
         {
-            if(vs_dreq_status())//定时检测数据请求引脚，打开SPI DMA
+            if(vs_ctl.fd > 0 && vs_ctl.vs_status)
             {
-                vs_spi_dma_start();//DMA会在下降沿触发时关掉
+                rt_kprintf("ds\n");
+                while(1)
+                {
+                    if(vs_dreq_status())
+                    {
+                        int ret;
+                        int offset;
+                        int write_len;
+                        
+                        offset = VS_FLIE_BUFFER_LEN - vs_ctl.data_len;
+                        write_len = vs_ctl.data_len >= 32 ? 32:vs_ctl.data_len;
+                        vs_ctl.data_len -= write_len;
+                        rt_kprintf("1\n");
+                        vs_spi_write_bytes(&(vs_ctl.data_buffer[offset]),write_len);
+                        rt_kprintf("2\n");
+                        if(!vs_ctl.data_len)
+                        {
+                            rt_kprintf("read\n");
+                            ret = read(vs_ctl.fd,vs_ctl.data_buffer,VS_FLIE_BUFFER_LEN);
+                            vs_ctl.data_len = ret;
+                            if(ret <= 0)
+                            {
+                                rt_event_send(&vs_event,VS_PLAY_OVER_EVENT);//发送歌曲播放结束的事件
+                                vs_set_status(0);
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        break;//低电平就跳出，休眠任务
+                    }
+                }
+                
             }
             continue;
         }
-        #endif
-        #if 1
-        if(vs_ctl.fd>0)
-        {
-            char data_1[320];
-            int ret;
-            int i,j;
-            if(vs_dreq_status())
-            {
-                ret = read(vs_ctl.fd,data_1,32);
-                vs_xdcs_cs(0);
-                for(i=0;i<32;i++)
-                {
-                    SPI_Write_Byte_vs(data_1[i]);
-                }
-                vs_xdcs_cs(1);
-            }
-            else
-            {
-                rt_kprintf("tick :%d\n",rt_tick_get()-tick_1);
-                tick_1 = rt_tick_get();
-                rt_thread_delay(time_flag);
-            }
-            
-            
-        }
-        continue;
-        #endif
         //获得事件
+        rt_kprintf("recvied recved %08x\n",recved);
         if(recved & VS_START_EVENT)
         {
             rt_kprintf("recvied start cmd\n");
-            vs_spi_dma_start();
+            //vs_spi_dma_start();
         }
         if(recved & VS_STOP_EVENT)
         {
             rt_kprintf("recvied stop cmd\n");
-            vs_spi_dma_stop();
+            //vs_spi_dma_stop();
         }
         if(recved & VS_PLAY_OVER_EVENT)
         {
             rt_kprintf("play over\n");
             if(vs_ctl.play_way == VS_PLAY_CIRCLE)
             {
-                vs_auto_play("/music/");
+                //vs_auto_play("/music/");
             }
         }
-        if(recved & VS_DMA_TC_EVENT)
-        {
-            int ret;
-            
-            if(vs_ctl.fd > 0)
-            {
-                ret = read(vs_ctl.fd,vs1003_data_buff+(VS_1003_BUFF_LEN>>1),(VS_1003_BUFF_LEN>>1));
-                rt_kprintf("DMA all ok len:%d\n",ret);
-            }
-        }
-        if(recved & VS_DMA_HT_EVENT)
-        {
-            int ret;
-            
-            if(vs_ctl.fd > 0)
-            {
-                ret = read(vs_ctl.fd,vs1003_data_buff,(VS_1003_BUFF_LEN>>1));
-                rt_kprintf("DMA half ok len:%d\n",ret);
-            }
-        }
-        
     }
 }
 
@@ -719,21 +726,42 @@ int vs_music_action(int argc, char ** argv)
 void vs_1003_cmd(int argc, char ** argv)
 {
     int fd;
+	char e;
     if (argc < 2)
     {
         music_log("Usage: err\n");
         return;
     }
+	
     if(!strncmp(argv[1],"run",rt_strlen("run")))
     {
-        int num;
-        //dev_audio_play(argv[1]);
-        num = atoi(argv[2]);
-        rt_kprintf("num :%d\n",num);
-        if(num>0 && num <255)
-            time_flag = num;
+        
+        return ;
+    } 
+    if(!strncmp(argv[1],"e",rt_strlen("e")))
+    {
+        rt_memcpy(&e,argv[2],1);
+        rt_kprintf("e event\n");
+        switch(e){
+        case 'n':
+            rt_kprintf("n event\n");
+            rt_event_send(&vs_event,VS_PLAY_OVER_EVENT);
+            break;
+        case 's':
+            rt_kprintf("s event\n");
+            rt_event_send(&vs_event,VS_START_EVENT);
+            break;
+        case 't':
+            rt_kprintf("t event\n");
+            rt_event_send(&vs_event,VS_STOP_EVENT);
+            break;
+        default:
+            break;
+				}
         return ;
     }
+    dev_audio_play(argv[1]);
+    #if 0
     if(!strncmp(argv[1],"stop",rt_strlen("st")))
     {
         rt_kprintf("vs stop dma\n");
@@ -756,10 +784,7 @@ void vs_1003_cmd(int argc, char ** argv)
         rt_kprintf("vs start spi run\n");
         vs_spi_start();
     }
-    dev_audio_play(argv[1]);
-    //fd = open(argv[1],O_RDONLY);
-    //if(fd>0)
-       // vs_ctl.fd = fd;
+    #endif
 }
 //INIT_APP_EXPORT(vs_music_startup);
 
@@ -769,7 +794,7 @@ int dev_audio_play(char* file_name)
     int ret;
     rt_thread_t tid;
     char temp_file[128];
-    rt_kprintf("dev_audio_play\n");
+    
     rt_memset(temp_file,0,128);
     if(file_name[0] != '/')
 	{
@@ -778,24 +803,26 @@ int dev_audio_play(char* file_name)
             strcat(temp_file, "/");
 	}
     strcat(temp_file, file_name);
-    rt_kprintf("dev_audio_play:%s\n",temp_file);
     fd = open(temp_file,O_RDONLY);
     if(fd < 0)
     {
         rt_kprintf("open %s fail\n",temp_file);
         return -1;
     }
-    //vs_spi_dma_stop();
-    rt_kprintf("close %d \n",vs_ctl.fd);
+    rt_kprintf("dev_audio_play:%s\n",temp_file);
+    vs_set_status(0);//设置vs停止
     if(vs_ctl.fd > 0)
     {
+        rt_kprintf("close:%s\n",temp_file);
         close(vs_ctl.fd);
     }
     rt_memset(&vs_ctl,0,sizeof(VS_CTL));
     vs_ctl.fd = fd;
     rt_memcpy(vs_ctl.file_name,temp_file,rt_strlen(temp_file));
-    rt_memset(vs1003_data_buff,0,VS_1003_BUFF_LEN);
-    ret = read(vs_ctl.fd,vs1003_data_buff,VS_1003_BUFF_LEN);
+    ret = read(vs_ctl.fd,vs_ctl.data_buffer,VS_FLIE_BUFFER_LEN);
+    rt_kprintf("dev_audio_play read:%d\n",ret);
+    vs_ctl.data_len = ret;
+    vs_set_status(1);//设置vs启动
     tid = rt_thread_find("vs1003");
     if(!tid)
     {
