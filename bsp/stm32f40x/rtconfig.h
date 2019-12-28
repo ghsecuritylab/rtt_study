@@ -71,7 +71,7 @@
 #define FINSH_USING_SYMTAB
 #define FINSH_USING_DESCRIPTION
 #define FINSH_THREAD_PRIORITY 20
-#define FINSH_THREAD_STACK_SIZE 4096*2
+#define FINSH_THREAD_STACK_SIZE 4096
 #define FINSH_CMD_SIZE 80
 #define FINSH_USING_MSH
 #define FINSH_USING_MSH_DEFAULT
@@ -88,7 +88,7 @@
 
 /* elm-chan's FatFs, Generic FAT Filesystem Module */
 
-#define RT_DFS_ELM_CODE_PAGE 437
+#define RT_DFS_ELM_CODE_PAGE 936
 #define RT_DFS_ELM_WORD_ACCESS
 #define RT_DFS_ELM_USE_LFN_3
 #define RT_DFS_ELM_USE_LFN 3
@@ -249,7 +249,5 @@
 #define SOC_STM32F4
 #define RT_USING_UART1
 #define RT_USING_UART2
-#define RT_USING_UART2
-#define RT_MUSIC_VS1003
 
 #endif

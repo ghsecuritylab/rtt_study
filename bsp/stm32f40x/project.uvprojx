@@ -570,12 +570,12 @@
             <File>
               <FileName>vs1003.c</FileName>
               <FileType>1</FileType>
-              <FilePath>drivers\vs1003\vs1003.c</FilePath>
+              <FilePath>.\drivers\vs1003\vs1003.c</FilePath>
             </File>
             <File>
               <FileName>vs1003_task.c</FileName>
               <FileType>1</FileType>
-              <FilePath>drivers\vs1003\vs1003_task.c</FilePath>
+              <FilePath>.\drivers\vs1003\vs1003_task.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1002,9 +1002,9 @@
               <FilePath>..\..\components\dfs\filesystems\elmfat\ff.c</FilePath>
             </File>
             <File>
-              <FileName>ccsbcs.c</FileName>
+              <FileName>cc936.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\components\dfs\filesystems\elmfat\option\ccsbcs.c</FilePath>
+              <FilePath>..\..\components\dfs\filesystems\elmfat\option\cc936.c</FilePath>
             </File>
           </Files>
         </Group>

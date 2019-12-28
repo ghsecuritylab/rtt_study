@@ -161,7 +161,7 @@ void vs_spi_init(void)
     SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
     /* baudrate *///外设总线频率为84MHZ，32分频，则再除以32可以得到SPI主频
     //先往低的来，怕vs1003接收不来，OK了再升频率
-    SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_8;
+    SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_16;
     SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
     /* CPHA */
     SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;
@@ -545,7 +545,7 @@ void DMA1_Stream4_IRQHandler(void)
     }
 	DMA_ClearITPendingBit(DMA1_Stream4,DMA_IT_TCIF4 | DMA_IT_HTIF4);
 }
-u8 time_flag = 0;
+u8 time_flag = 20;
 static void vs_music_service_task(void *param)
 {
     rt_err_t ret;
@@ -564,11 +564,10 @@ static void vs_music_service_task(void *param)
     {
         if(rt_event_recv(&vs_event,VS_START_EVENT | VS_STOP_EVENT  | VS_PLAY_OVER_EVENT,
                             RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR,
-                            rt_tick_from_millisecond(20),&recved)!= RT_EOK)
+                            rt_tick_from_millisecond(time_flag),&recved)!= RT_EOK)
         {
             if(vs_ctl.fd > 0 && vs_ctl.vs_status)
             {
-                rt_kprintf("ds\n");
                 while(1)
                 {
                     if(vs_dreq_status())
@@ -580,12 +579,9 @@ static void vs_music_service_task(void *param)
                         offset = VS_FLIE_BUFFER_LEN - vs_ctl.data_len;
                         write_len = vs_ctl.data_len >= 32 ? 32:vs_ctl.data_len;
                         vs_ctl.data_len -= write_len;
-                        rt_kprintf("1\n");
                         vs_spi_write_bytes(&(vs_ctl.data_buffer[offset]),write_len);
-                        rt_kprintf("2\n");
                         if(!vs_ctl.data_len)
                         {
-                            rt_kprintf("read\n");
                             ret = read(vs_ctl.fd,vs_ctl.data_buffer,VS_FLIE_BUFFER_LEN);
                             vs_ctl.data_len = ret;
                             if(ret <= 0)
@@ -622,7 +618,8 @@ static void vs_music_service_task(void *param)
             rt_kprintf("play over\n");
             if(vs_ctl.play_way == VS_PLAY_CIRCLE)
             {
-                //vs_auto_play("/music/");
+                rt_kprintf("play again\n");
+                vs_auto_play("/music/");
             }
         }
     }
@@ -645,9 +642,10 @@ int vs_auto_play(char * file_dir_name)
     file_info = readdir(dir);
     if(!file_info)
     {
+        rt_kprintf("seekdir\n");
         seekdir(dir,SEEK_SET);
         file_info = readdir(dir);
-        return -1;
+        //return -1;
     }
     rt_memset(temp_file_name,0,60);
     rt_strncpy(temp_file_name,file_dir_name,rt_strlen(file_dir_name));
@@ -735,7 +733,11 @@ void vs_1003_cmd(int argc, char ** argv)
 	
     if(!strncmp(argv[1],"run",rt_strlen("run")))
     {
-        
+        int num;
+        num = atoi(argv[2]);
+        rt_kprintf("num:%d\n",num);
+        if(num>0&&num<255)
+            time_flag = num;
         return ;
     } 
     if(!strncmp(argv[1],"e",rt_strlen("e")))

@@ -865,7 +865,6 @@ void EXTI9_5_IRQHandler(void)
     if (EXTI_GetITStatus(EXTI_Line6) != RESET)
     {
         pin_irq_hdr(6);
-        vs_dreq_int();
     }
     if (EXTI_GetITStatus(EXTI_Line7) != RESET)
     {
