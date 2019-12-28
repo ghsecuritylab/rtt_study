@@ -1,5 +1,5 @@
-#include "recorder.h"
-#include "delay.h"
+#include "vs1003_recorder.h"
+
 #include "usart.h"      
 	    
  

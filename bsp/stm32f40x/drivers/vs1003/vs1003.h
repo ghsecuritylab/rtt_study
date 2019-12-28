@@ -48,7 +48,6 @@ void VS_Flush_Buffer(); //清空VS1003的数据缓冲区
 void VS_sin_test(unsigned char x); //正弦测试
 void LoadPatch(); //为VS1003打补丁
 
-int vs_auto_play(char * file_dir_name,char * path);
 void vs_spi_dma_stop();
 void vs_xdcs_cs(u8 status);
 int dev_audio_play(char* file_name);
