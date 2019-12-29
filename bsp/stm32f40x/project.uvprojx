@@ -570,12 +570,17 @@
             <File>
               <FileName>vs1003.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\drivers\vs1003\vs1003.c</FilePath>
+              <FilePath>drivers\vs1003\vs1003.c</FilePath>
+            </File>
+            <File>
+              <FileName>vs1003_recorder.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\vs1003\vs1003_recorder.c</FilePath>
             </File>
             <File>
               <FileName>vs1003_task.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\drivers\vs1003\vs1003_task.c</FilePath>
+              <FilePath>drivers\vs1003\vs1003_task.c</FilePath>
             </File>
           </Files>
         </Group>

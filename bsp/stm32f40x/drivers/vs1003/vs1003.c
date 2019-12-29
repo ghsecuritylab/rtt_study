@@ -28,7 +28,7 @@ typedef struct
 typedef struct 
 {
     int fd;//文件句柄
-    int vs_status;
+    int vs_status;//0表示未打开，1表示播放歌曲，2表示录音
     int play_way;//循环播放或单曲
     int file_len;
     int data_len;//buffer中的数据长度
@@ -52,6 +52,7 @@ static u8 spi_dma_status = 0;
 
 static rt_timer_t vs_timer;
 static struct rt_event vs_event;
+static struct rt_mutex vs_mutex;//命令和数据发送的互斥量
 VS_CTL vs_ctl = {0};
 
 u8 vs_dma_status(void)
@@ -353,12 +354,13 @@ void VS_Write_Reg(unsigned char addr,unsigned char hdat,unsigned char ldat)
 
 unsigned int VS_Read_Reg(unsigned char addr) 
 {  
-    unsigned int temp=0,temp1;
+    unsigned int temp=0,temp1=0;
     while(!vs_dreq_status());//VS1003的DREQ为高电平时才接收数据
     vs_xcs_cs(0);//打开片选，SCI有效
     SPI_Write_Byte_vs(VS_READ_COMMAND);  //读出操作码0x03   00000011（功能寄存器读操作）
+    temp =SPI_Write_Byte_vs(addr);  //
     temp =SPI_Write_Byte_vs(addr);  //写入寄存器地址 并读数据
-    temp1 = temp;
+    temp1 =SPI_Write_Byte_vs(addr);  //写入寄存器地址 并读数据
     temp<<=8;
     temp|=temp1;
     vs_xcs_cs(1); //关闭片选，SCI无效
@@ -382,7 +384,7 @@ void VS_Reset()
 
     VS_Write_Reg(SPI_MODE  ,0x08,0x04);  //软件复位，向0号寄存器写入0x0804   SM_SDINEW为1   SM_RESET为1
     VS_Write_Reg(SPI_CLOCKF,0x98,0x00);  //时钟设置，向3号寄存器写入0x9800   SC_MULT  为4   SC_ADD  为3   SC_FREQ为0
-    VS_Write_Reg(SPI_VOL   ,0x00,0x00);  //音量设置，左右声道均最大音量
+    VS_Write_Reg(SPI_VOL   ,0, 0);  //音量设置，左右声道均最大音量
    
     vs_xdcs_cs(0);	     //打开数据片选，注意此时XCS（命令片选）为高电平，SDI有效
     SPI_Write_Byte_vs(0);    //写入数据，这里写入4个0，是无关数据，用来启动数据传输
@@ -545,7 +547,7 @@ void DMA1_Stream4_IRQHandler(void)
     }
 	DMA_ClearITPendingBit(DMA1_Stream4,DMA_IT_TCIF4 | DMA_IT_HTIF4);
 }
-u8 time_flag = 20;
+u8 time_flag = 10;
 static void vs_music_service_task(void *param)
 {
     rt_err_t ret;
@@ -560,14 +562,23 @@ static void vs_music_service_task(void *param)
         rt_kprintf("rt_event_init fail\n");
         return ;
     }
+    rt_event_send(&vs_event,VS_PLAY_OVER_EVENT);
+    ret = rt_mutex_init(&vs_mutex, "vs_mutex", RT_IPC_FLAG_FIFO);
+    if(ret!=RT_EOK)
+    {
+        rt_kprintf("rt_mutex_init fail\n");
+        return ;
+    }
     while (1)
     {
         if(rt_event_recv(&vs_event,VS_START_EVENT | VS_STOP_EVENT  | VS_PLAY_OVER_EVENT,
                             RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR,
                             rt_tick_from_millisecond(time_flag),&recved)!= RT_EOK)
         {
-            if(vs_ctl.fd > 0 && vs_ctl.vs_status)
+            if(vs_ctl.fd > 0 && vs_ctl.vs_status == 3)
             {
+                
+                rt_mutex_take(&vs_mutex,RT_WAITING_FOREVER);
                 while(1)
                 {
                     if(vs_dreq_status())
@@ -586,6 +597,7 @@ static void vs_music_service_task(void *param)
                             vs_ctl.data_len = ret;
                             if(ret <= 0)
                             {
+                                rt_kprintf("music over\n");
                                 rt_event_send(&vs_event,VS_PLAY_OVER_EVENT);//发送歌曲播放结束的事件
                                 vs_set_status(0);
                                 break;
@@ -597,7 +609,13 @@ static void vs_music_service_task(void *param)
                         break;//低电平就跳出，休眠任务
                     }
                 }
+                rt_mutex_release(&vs_mutex);
                 
+            }
+
+            if(vs_ctl.vs_status == 2)
+            {
+                dev_record_doing();
             }
             continue;
         }
@@ -624,6 +642,21 @@ static void vs_music_service_task(void *param)
         }
     }
 }
+int vs_CheckFileExtname(char* path)
+{
+	char* temp;
+	
+	temp = strrchr(path,'.');
+	
+	temp ++;
+	
+	if(!rt_strcasecmp(temp,"MP3"))
+		return AudioFileType_MP3;
+	else if(!rt_strcasecmp(temp,"WAV"))
+		return AudioFileType_WAV;
+	
+	return AudioFileType_ERROR;
+}
 
 int vs_auto_play(char * file_dir_name)
 {
@@ -645,7 +678,12 @@ int vs_auto_play(char * file_dir_name)
         rt_kprintf("seekdir\n");
         seekdir(dir,SEEK_SET);
         file_info = readdir(dir);
-        //return -1;
+    }
+    if(vs_CheckFileExtname(file_info->d_name) == AudioFileType_ERROR)
+    {
+        rt_kprintf("vs_CheckFileExtname error\n");
+        rt_event_send(&vs_event,VS_PLAY_OVER_EVENT);
+        return -1;
     }
     rt_memset(temp_file_name,0,60);
     rt_strncpy(temp_file_name,file_dir_name,rt_strlen(file_dir_name));
@@ -679,7 +717,7 @@ void vs_music_startup(void)
         music_log("music_service_task init fail...\n");
     }
 }
-//INIT_APP_EXPORT(vs_music_startup);
+INIT_APP_EXPORT(vs_music_startup);
 
 int vs_music_action(int argc, char ** argv)
 {
@@ -740,6 +778,37 @@ void vs_1003_cmd(int argc, char ** argv)
             time_flag = num;
         return ;
     } 
+    if(!strncmp(argv[1],"init",rt_strlen("init")))
+    {
+        rt_kprintf("recorder init\n");
+        dev_record_init(argv[2]);
+        return ;
+    } 
+    if(!strncmp(argv[1],"close",rt_strlen("close")))
+    {
+        rt_kprintf("recorder close\n");
+        dev_record_close();
+        return ;
+    }
+    if(!strncmp(argv[1],"read",rt_strlen("read")))
+    {
+        int num;
+        rt_mutex_take(&vs_mutex,RT_WAITING_FOREVER);
+        num = atoi(argv[2]);
+        rt_kprintf("VS_Read_Reg:%04x\n",VS_Read_Reg(num));
+        
+        rt_mutex_release(&vs_mutex);
+        return ;
+    } 
+    if(!strncmp(argv[1],"wr",rt_strlen("wr")))
+    {
+        int num;
+        rt_mutex_take(&vs_mutex,RT_WAITING_FOREVER);
+        num = atoi(argv[2]);
+        VS_Write_Reg(num,atoi(argv[3]),atoi(argv[4]));
+        rt_mutex_release(&vs_mutex);
+        return ;
+    } 
     if(!strncmp(argv[1],"e",rt_strlen("e")))
     {
         rt_memcpy(&e,argv[2],1);
@@ -762,34 +831,145 @@ void vs_1003_cmd(int argc, char ** argv)
 				}
         return ;
     }
+    if(!strncmp(argv[1],"ctl",rt_strlen("ctl")))
+    {
+        int temp = atoi(argv[3]);
+        if(!strncmp(argv[2],"vol",rt_strlen("vol")))
+        {
+            vs_audio_ioctl(SPI_VOL,temp,0);
+        }
+        else if(!strncmp(argv[2],"rec",rt_strlen("rec")))
+        {
+            vs_audio_ioctl(VS_RECORDER_MODE,temp,0);
+        }
+        else if(!strncmp(argv[2],"res",rt_strlen("res")))
+        {
+            vs_audio_ioctl(VS_SOFT_RESET,temp,0);
+        }
+        else if(!strncmp(argv[2],"diff",rt_strlen("diff")))
+        {
+            vs_audio_ioctl(VS_SM_DIFF_MODE,temp,0);
+        }
+        else if(!strncmp(argv[2],"down",rt_strlen("down")))
+        {
+            vs_audio_ioctl(VS_SM_PDOWN_MODE,temp,0);
+        }
+        else
+        {
+            rt_kprintf("err cmd\n");
+        }
+        return ;
+    }
     dev_audio_play(argv[1]);
-    #if 0
-    if(!strncmp(argv[1],"stop",rt_strlen("st")))
-    {
-        rt_kprintf("vs stop dma\n");
-        vs_spi_dma_stop();
-        DMA_Cmd(DMA1_Stream4, DISABLE);
-    }
-    if(!strncmp(argv[1],"vs",rt_strlen("vs")))
-    {
-        rt_kprintf("vs start dma\n");
-        DMA_Cmd(DMA1_Stream4, ENABLE);
-        vs_spi_dma_start();
-    }
-    if(!strncmp(argv[1],"spis",rt_strlen("spis")))
-    {
-        rt_kprintf("vs start spistop\n");
-        vs_spi_stop();
-    }
-    if(!strncmp(argv[1],"spir",rt_strlen("spir")))
-    {
-        rt_kprintf("vs start spi run\n");
-        vs_spi_start();
-    }
-    #endif
 }
-//INIT_APP_EXPORT(vs_music_startup);
+int vs_audio_ioctl(int nCmd ,int lParam ,int wParam)
+{
+    unsigned char hbat;
+    unsigned char lbat;
+    int reg_value = 0;
+    rt_mutex_take(&vs_mutex,RT_WAITING_FOREVER);
+    if(nCmd>=SPI_MODE && nCmd<=SPI_AICTRL3)
+    {
+        reg_value = VS_Read_Reg(nCmd);
+    }
+    switch(nCmd)
+    {
+        case SPI_MODE :
+            
+        break;
+        case SPI_STATUS:
+        
+        break;
+        case SPI_BASS:
 
+        break;
+        case SPI_CLOCKF :
+
+        break;
+        case SPI_DECODE_TIME :
+
+        break;
+        case SPI_AUDATA :
+
+        break;
+        case SPI_HDAT0 :
+
+        break;
+        case SPI_HDAT1 :
+
+        break;
+        case SPI_VOL:
+            if(lParam>=0 && lParam<=254)
+            {
+                hbat = lbat = lParam;
+            }
+            else
+            {
+                hbat = lbat = 140;
+            }
+            VS_Write_Reg(SPI_VOL,hbat,lbat);
+        break;
+        case VS_SOFT_RESET:
+            reg_value = VS_Read_Reg(SPI_MODE);
+            hbat = (reg_value >> 8);
+            lbat = reg_value | SM_RESET;
+            VS_Write_Reg(SPI_MODE,hbat,lbat);
+        break;
+        case VS_RECORDER_MODE:
+            reg_value = VS_Read_Reg(SPI_MODE);
+            lbat = reg_value;
+            if(lParam)
+            {
+                hbat = (reg_value >> 8) | 0x30;
+            }
+            else
+            {
+                hbat = (reg_value >> 8) & (~0x30);
+            }
+            VS_Write_Reg(SPI_MODE,hbat,lbat);
+        break;
+        case VS_SM_DIFF_MODE:
+            reg_value = VS_Read_Reg(SPI_MODE);
+            hbat = (reg_value >> 8);
+            if(lParam)
+            {
+                lbat = reg_value | 0x01;
+            }
+            else
+            {
+                lbat = reg_value & (~0x01);
+            }
+            VS_Write_Reg(SPI_MODE,hbat,lbat);
+        break;
+        case VS_SM_PDOWN_MODE:
+           reg_value = VS_Read_Reg(SPI_MODE);
+           hbat = (reg_value >> 8);
+           if(lParam)
+           {
+               lbat = reg_value | SM_PDOWN;
+           }
+           else
+           {
+               lbat = reg_value & (~SM_PDOWN);
+           }
+           VS_Write_Reg(SPI_MODE,hbat,lbat);
+       break;
+        default:
+            rt_kprintf("cmd  err\n");
+            break;
+    }
+    if(nCmd>=SPI_MODE && nCmd<=SPI_AICTRL3)
+    {
+        rt_kprintf("read cmd %02x :%04x",nCmd ,VS_Read_Reg(nCmd));
+    }
+    else
+    {
+        rt_kprintf("read cmd %02x :%04x",nCmd ,VS_Read_Reg(SPI_MODE));
+    }
+    
+    rt_mutex_release(&vs_mutex);
+    return 0;
+}
 int dev_audio_play(char* file_name)
 {
     int fd;
@@ -815,10 +995,17 @@ int dev_audio_play(char* file_name)
     vs_set_status(0);//设置vs停止
     if(vs_ctl.fd > 0)
     {
-        rt_kprintf("close:%s\n",temp_file);
         close(vs_ctl.fd);
     }
-    rt_memset(&vs_ctl,0,sizeof(VS_CTL));
+    if(vs_ctl.play_way)
+    {
+        rt_memset(&vs_ctl,0,sizeof(VS_CTL));
+        vs_ctl.play_way = 1;
+    }
+    else
+    {
+        rt_memset(&vs_ctl,0,sizeof(VS_CTL));
+    }
     vs_ctl.fd = fd;
     rt_memcpy(vs_ctl.file_name,temp_file,rt_strlen(temp_file));
     ret = read(vs_ctl.fd,vs_ctl.data_buffer,VS_FLIE_BUFFER_LEN);

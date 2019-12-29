@@ -6,6 +6,14 @@
 #include "spi.h"
 #include <stdlib.h>
 #include <rtthread.h>
+
+
+typedef enum
+{
+	AudioFileType_ERROR,
+	AudioFileType_MP3,
+	AudioFileType_WAV,
+}AudioFileType;
 //vs1003寄存器相关宏定义 
 #define VS_WRITE_COMMAND 0x02    //写命令
 #define VS_READ_COMMAND  0x03    //读命令
@@ -25,7 +33,12 @@
 #define SPI_AICTRL1      0x0D    //应用控制寄存器1   
 #define SPI_AICTRL2      0x0E    //应用控制寄存器2  
 #define SPI_AICTRL3      0x0F    //应用控制寄存器3  
-/*#define SM_DIFF         0x01   
+#define VS_SOFT_RESET    0x20    //软复位
+#define VS_RECORDER_MODE 0x21    //录音模式开始
+#define VS_SM_DIFF_MODE  0x22    //录音模式开始
+#define VS_SM_PDOWN_MODE 0x23    //掉电模式
+
+#define SM_DIFF         0x01   
 #define SM_JUMP         0x02   
 #define SM_RESET        0x04   
 #define SM_OUTOFWAV     0x08   
@@ -38,7 +51,7 @@
 #define SM_SDISHARE     0x400   
 #define SM_SDINEW       0x800   
 #define SM_ADPCM        0x1000   
-#define SM_ADPCM_HP     0x2000 */
+#define SM_ADPCM_HP     0x2000 
 
 void VS_Reset(); //VS1003软复位及初始化
 void VS_Write_Reg(unsigned char addr,unsigned char hdat,unsigned char ldat); //向VS1003的功能寄存器写入一个字
@@ -53,4 +66,6 @@ void vs_xdcs_cs(u8 status);
 int dev_audio_play(char* file_name);
 int vs_auto_play(char * file_dir_name);
 unsigned char SPI_Write_Byte_vs(unsigned char byte);
+int vs_audio_ioctl(int nCmd ,int lParam ,int wParam);
+
 #endif
