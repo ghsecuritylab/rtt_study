@@ -17,128 +17,86 @@
 //对IS61LV25616/IS62WV25616,地址线范围为A0~A17 
 //对IS61LV51216/IS62WV51216,地址线范围为A0~A18
 #define Bank1_SRAM3_ADDR    ((u32)(0x68000000))	
-  						   
 //初始化外部SRAM
 void FSMC_SRAM_Init(void)
-{	
-	GPIO_InitTypeDef  GPIO_InitStructure;
-	FSMC_NORSRAMInitTypeDef  FSMC_NORSRAMInitStructure;
-    FSMC_NORSRAMTimingInitTypeDef  readWriteTiming; 
+{
+	RCC->AHB1ENR|=0XF<<3;    	//使能PD,PE,PF,PG时钟  
+	RCC->AHB3ENR|=1<<0;     	//使能FSMC时钟  
+	 
+ 	GPIO_AF_Set(GPIOG,10,12);	//PG10,AF12(CS放到最前面,防止CS非法变低,破坏原有数据) 
 	
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD|RCC_AHB1Periph_GPIOE|RCC_AHB1Periph_GPIOF|RCC_AHB1Periph_GPIOG, ENABLE);//使能PD,PE,PF,PG时钟  
-    RCC_AHB3PeriphClockCmd(RCC_AHB3Periph_FSMC,ENABLE);//使能FSMC时钟  
-   
-	GPIO_InitStructure.GPIO_Pin = (3<<0)|(3<<4)|(0XFF<<8);//PD0,1,4,5,8~15 AF OUT
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;//复用输出
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
-    GPIO_Init(GPIOD, &GPIO_InitStructure);//初始化  
-  	
-    GPIO_InitStructure.GPIO_Pin = (3<<0)|(0X1FF<<7);//PE0,1,7~15,AF OUT
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;//复用输出
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
-    GPIO_Init(GPIOE, &GPIO_InitStructure);//初始化  
-	
- 	GPIO_InitStructure.GPIO_Pin = (0X3F<<0)|(0XF<<12); 	//PF0~5,12~15
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;//复用输出
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
-    GPIO_Init(GPIOF, &GPIO_InitStructure);//初始化  
-
-	GPIO_InitStructure.GPIO_Pin =(0X3F<<0)| GPIO_Pin_10;//PG0~5,10
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;//复用输出
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
-    GPIO_Init(GPIOG, &GPIO_InitStructure);//初始化 
+	GPIO_Set(GPIOD,(3<<0)|(3<<4)|(0XFF<<8),GPIO_MODE_AF,GPIO_OTYPE_PP,GPIO_SPEED_100M,GPIO_PUPD_PU);	//PD0,1,4,5,8~15 AF OUT
+ 	GPIO_Set(GPIOE,(3<<0)|(0X1FF<<7),GPIO_MODE_AF,GPIO_OTYPE_PP,GPIO_SPEED_100M,GPIO_PUPD_PU);			//PE0,1,7~15,AF OUT
+	GPIO_Set(GPIOF,(0X3F<<0)|(0XF<<12),GPIO_MODE_AF,GPIO_OTYPE_PP,GPIO_SPEED_100M,GPIO_PUPD_PU); 	 	//PF0~5,12~15
+	GPIO_Set(GPIOG,(0X3F<<0)|PIN10,GPIO_MODE_AF,GPIO_OTYPE_PP,GPIO_SPEED_100M,GPIO_PUPD_PU);	 		//PG0~5,10
  
-   
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource0,GPIO_AF_FSMC);//PD0,AF12
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource1,GPIO_AF_FSMC);//PD1,AF12
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource4,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource5,GPIO_AF_FSMC); 
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource8,GPIO_AF_FSMC); 
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource9,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource10,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource11,GPIO_AF_FSMC);
-	GPIO_PinAFConfig(GPIOD,GPIO_PinSource12,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource13,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource14,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOD,GPIO_PinSource15,GPIO_AF_FSMC);//PD15,AF12
-   
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource0,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource1,GPIO_AF_FSMC);
-	GPIO_PinAFConfig(GPIOE,GPIO_PinSource7,GPIO_AF_FSMC);//PE7,AF12
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource8,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource9,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource10,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource11,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource12,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource13,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource14,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource15,GPIO_AF_FSMC);//PE15,AF12
- 
-    GPIO_PinAFConfig(GPIOF,GPIO_PinSource0,GPIO_AF_FSMC);//PF0,AF12
-    GPIO_PinAFConfig(GPIOF,GPIO_PinSource1,GPIO_AF_FSMC);//PF1,AF12
-    GPIO_PinAFConfig(GPIOF,GPIO_PinSource2,GPIO_AF_FSMC);//PF2,AF12
-    GPIO_PinAFConfig(GPIOF,GPIO_PinSource3,GPIO_AF_FSMC);//PF3,AF12
-    GPIO_PinAFConfig(GPIOF,GPIO_PinSource4,GPIO_AF_FSMC);//PF4,AF12
-    GPIO_PinAFConfig(GPIOF,GPIO_PinSource5,GPIO_AF_FSMC);//PF5,AF12
-    GPIO_PinAFConfig(GPIOF,GPIO_PinSource12,GPIO_AF_FSMC);//PF12,AF12
-    GPIO_PinAFConfig(GPIOF,GPIO_PinSource13,GPIO_AF_FSMC);//PF13,AF12
-    GPIO_PinAFConfig(GPIOF,GPIO_PinSource14,GPIO_AF_FSMC);//PF14,AF12
-    GPIO_PinAFConfig(GPIOF,GPIO_PinSource15,GPIO_AF_FSMC);//PF15,AF12
-  	
-    GPIO_PinAFConfig(GPIOG,GPIO_PinSource0,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOG,GPIO_PinSource1,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOG,GPIO_PinSource2,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOG,GPIO_PinSource3,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOG,GPIO_PinSource4,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOG,GPIO_PinSource5,GPIO_AF_FSMC);
-    GPIO_PinAFConfig(GPIOG,GPIO_PinSource10,GPIO_AF_FSMC);
 	
- 	  
- 	readWriteTiming.FSMC_AddressSetupTime = 0x00;	 //地址建立时间（ADDSET）为1个HCLK 1/36M=27ns
-    readWriteTiming.FSMC_AddressHoldTime = 0x00;	 //地址保持时间（ADDHLD）模式A未用到	
-    readWriteTiming.FSMC_DataSetupTime = 0x0b;		 ////数据保持时间（DATAST）为9个HCLK 6*9=54ns	 	 
-    readWriteTiming.FSMC_BusTurnAroundDuration = 0x00;
-    readWriteTiming.FSMC_CLKDivision = 0x00;
-    readWriteTiming.FSMC_DataLatency = 0x00;
-    readWriteTiming.FSMC_AccessMode = FSMC_AccessMode_A;	 //模式A 
-    
-    FSMC_NORSRAMInitStructure.FSMC_Bank = FSMC_Bank1_NORSRAM3;//  这里我们使用NE3 ，也就对应BTCR[4],[5]。
-    FSMC_NORSRAMInitStructure.FSMC_DataAddressMux = FSMC_DataAddressMux_Disable; 
-    FSMC_NORSRAMInitStructure.FSMC_MemoryType =FSMC_MemoryType_SRAM;// FSMC_MemoryType_SRAM;  //SRAM   
-    FSMC_NORSRAMInitStructure.FSMC_MemoryDataWidth = FSMC_MemoryDataWidth_16b;//存储器数据宽度为16bit  
-    FSMC_NORSRAMInitStructure.FSMC_BurstAccessMode =FSMC_BurstAccessMode_Disable;// FSMC_BurstAccessMode_Disable; 
-    FSMC_NORSRAMInitStructure.FSMC_WaitSignalPolarity = FSMC_WaitSignalPolarity_Low;
-	FSMC_NORSRAMInitStructure.FSMC_AsynchronousWait=FSMC_AsynchronousWait_Disable;
-    FSMC_NORSRAMInitStructure.FSMC_WrapMode = FSMC_WrapMode_Disable;   
-    FSMC_NORSRAMInitStructure.FSMC_WaitSignalActive = FSMC_WaitSignalActive_BeforeWaitState;  
-    FSMC_NORSRAMInitStructure.FSMC_WriteOperation = FSMC_WriteOperation_Enable;	//存储器写使能 
-    FSMC_NORSRAMInitStructure.FSMC_WaitSignal = FSMC_WaitSignal_Disable;  
-    FSMC_NORSRAMInitStructure.FSMC_ExtendedMode = FSMC_ExtendedMode_Disable; // 读写使用相同的时序
-    FSMC_NORSRAMInitStructure.FSMC_WriteBurst = FSMC_WriteBurst_Disable;  
-    FSMC_NORSRAMInitStructure.FSMC_ReadWriteTimingStruct = &readWriteTiming;
-    FSMC_NORSRAMInitStructure.FSMC_WriteTimingStruct = &readWriteTiming; //读写同样时序
-
-    FSMC_NORSRAMInit(&FSMC_NORSRAMInitStructure);  //初始化FSMC配置
- 	FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM3, ENABLE);  // 使能BANK1区域3	
- 	//rt_kprintf("fsmc_sram_init ok\n");
-}
+	GPIO_AF_Set(GPIOD,0,12);	//PD0,AF12
+ 	GPIO_AF_Set(GPIOD,1,12);	//PD1,AF12
+ 	GPIO_AF_Set(GPIOD,4,12);	//PD4,AF12
+ 	GPIO_AF_Set(GPIOD,5,12);	//PD5,AF12 
+ 	GPIO_AF_Set(GPIOD,8,12);	//PD8,AF12
+ 	GPIO_AF_Set(GPIOD,9,12);	//PD9,AF12
+ 	GPIO_AF_Set(GPIOD,10,12);	//PD10,AF12 
+ 	GPIO_AF_Set(GPIOD,11,12);	//PD11,AF12 
+ 	GPIO_AF_Set(GPIOD,12,12);	//PD12,AF12 
+ 	GPIO_AF_Set(GPIOD,13,12);	//PD13,AF12 
+ 	GPIO_AF_Set(GPIOD,14,12);	//PD14,AF12
+ 	GPIO_AF_Set(GPIOD,15,12);	//PD15,AF12
 	
-/****************************************************************************
-* 名    称: void FSMC_SRAM_WriteBuffer(u8* pBuffer,u32 WriteAddr,u32 n) 
-* 功    能：在指定地址(WriteAddr+Bank1_SRAM3_ADDR)开始,连续写入n个字节
-* 入口参数：pBuffer:字节指针
-            WriteAddr:要写入的地址
-* 返回参数：无
-* 说    明： 		     
-****************************************************************************/
+ 	GPIO_AF_Set(GPIOE,0,12);	//PE0,AF12
+ 	GPIO_AF_Set(GPIOE,1,12);	//PE1,AF12
+ 	GPIO_AF_Set(GPIOE,7,12);	//PE7,AF12
+ 	GPIO_AF_Set(GPIOE,8,12);	//PE8,AF12
+ 	GPIO_AF_Set(GPIOE,9,12);	//PE9,AF12
+ 	GPIO_AF_Set(GPIOE,10,12);	//PE10,AF12
+ 	GPIO_AF_Set(GPIOE,11,12);	//PE11,AF12
+ 	GPIO_AF_Set(GPIOE,12,12);	//PE12,AF12
+ 	GPIO_AF_Set(GPIOE,13,12);	//PE13,AF12
+ 	GPIO_AF_Set(GPIOE,14,12);	//PE14,AF12
+ 	GPIO_AF_Set(GPIOE,15,12);	//PE15,AF12
+	
+ 	GPIO_AF_Set(GPIOF,0,12);	//PF0,AF12
+ 	GPIO_AF_Set(GPIOF,1,12);	//PF1,AF12
+ 	GPIO_AF_Set(GPIOF,2,12);	//PF2,AF12
+ 	GPIO_AF_Set(GPIOF,3,12);	//PF3,AF12
+ 	GPIO_AF_Set(GPIOF,4,12);	//PF4,AF12
+ 	GPIO_AF_Set(GPIOF,5,12);	//PF5,AF12
+ 	GPIO_AF_Set(GPIOF,12,12);	//PF12,AF12
+ 	GPIO_AF_Set(GPIOF,13,12);	//PF13,AF12
+ 	GPIO_AF_Set(GPIOF,14,12);	//PF14,AF12
+ 	GPIO_AF_Set(GPIOF,15,12);	//PF15,AF12
+	
+ 	GPIO_AF_Set(GPIOG,0,12);	//PG0,AF12
+ 	GPIO_AF_Set(GPIOG,1,12);	//PG1,AF12
+ 	GPIO_AF_Set(GPIOG,2,12);	//PG2,AF12
+ 	GPIO_AF_Set(GPIOG,3,12);	//PG3,AF12
+ 	GPIO_AF_Set(GPIOG,4,12);	//PG4,AF12
+ 	GPIO_AF_Set(GPIOG,5,12);	//PG5,AF12 	
+	
+	//寄存器清零
+	//bank1有NE1~4,每一个有一个BCR+TCR，所以总共八个寄存器。
+	//这里我们使用NE3 ，也就对应BTCR[4],[5]。				    
+	FSMC_Bank1->BTCR[4]=0X00000000;
+	FSMC_Bank1->BTCR[5]=0X00000000;
+	FSMC_Bank1E->BWTR[4]=0X00000000;
+	//操作BCR寄存器	使用异步模式,模式A(读写共用一个时序寄存器)
+	//BTCR[偶数]:BCR寄存器;BTCR[奇数]:BTR寄存器
+	FSMC_Bank1->BTCR[4]|=1<<12;//存储器写使能
+	FSMC_Bank1->BTCR[4]|=1<<4; //存储器数据宽度为16bit 	    
+	//操作BTR寄存器			（HCLK=168M, 1个HCLK=6ns			    
+	FSMC_Bank1->BTCR[5]|=8<<8; //数据保持时间（DATAST）为9个HCLK 6*9=54ns	 	 
+	FSMC_Bank1->BTCR[5]|=0<<4; //地址保持时间（ADDHLD）未用到	  	 
+	FSMC_Bank1->BTCR[5]|=0<<0; //地址建立时间（ADDSET）为0个HCLK 0ns	 	 
+	//闪存写时序寄存器  
+	FSMC_Bank1E->BWTR[4]=0x0FFFFFFF;//默认值
+	//使能BANK1区域3
+	FSMC_Bank1->BTCR[4]|=1<<0; 	
+} 										
+//在指定地址(WriteAddr+Bank1_SRAM3_ADDR)开始,连续写入n个字节.
+//pBuffer:字节指针
+//WriteAddr:要写入的地址
+//n:要写入的字节数
 void FSMC_SRAM_WriteBuffer(u8* pBuffer,u32 WriteAddr,u32 n)
 {
 	for(;n!=0;n--)  
@@ -147,16 +105,11 @@ void FSMC_SRAM_WriteBuffer(u8* pBuffer,u32 WriteAddr,u32 n)
 		WriteAddr++;
 		pBuffer++;
 	}   
-}		
-
-/****************************************************************************
-* 名    称: 在指定地址((WriteAddr+Bank1_SRAM3_ADDR))开始,连续读出n个字节 
-* 功    能：在指定地址(WriteAddr+Bank1_SRAM3_ADDR)开始,连续写入n个字节
-* 入口参数：pBuffer:字节指针
-            ReadAddr:要读出的起始地址
-* 返回参数：无
-* 说    明： 		     
-****************************************************************************/
+}																			    
+//在指定地址((WriteAddr+Bank1_SRAM3_ADDR))开始,连续读出n个字节.
+//pBuffer:字节指针
+//ReadAddr:要读出的起始地址
+//n:要写入的字节数
 void FSMC_SRAM_ReadBuffer(u8* pBuffer,u32 ReadAddr,u32 n)
 {
 	for(;n!=0;n--)  
@@ -165,6 +118,36 @@ void FSMC_SRAM_ReadBuffer(u8* pBuffer,u32 ReadAddr,u32 n)
 		ReadAddr++;
 	}  
 } 
+////////////////////////////////////////////////////////////////////////////////////////
+//测试函数
+//在指定地址写入1个字节
+//addr:地址
+//data:要写入的数据
+void fsmc_sram_test_write(u32 addr,u8 data)
+{			   
+	FSMC_SRAM_WriteBuffer(&data,addr,1);//写入1个字节
+}
+//读取1个字节
+//addr:要读取的地址
+//返回值:读取到的数据
+u8 fsmc_sram_test_read(u32 addr)
+{
+	u8 data;
+	FSMC_SRAM_ReadBuffer(&data,addr,1);
+	return data;
+}
+
+
+
+
+
+
+
+
+
+
+
+
 //INIT_BOARD_EXPORT(FSMC_SRAM_Init);
 
 
