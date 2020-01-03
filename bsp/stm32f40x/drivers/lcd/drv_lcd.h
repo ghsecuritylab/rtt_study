@@ -95,10 +95,11 @@ extern _lcd_dev lcddev;	//管理LCD重要参数
 //LCD的画笔颜色和背景色	   
 extern u16  POINT_COLOR;//默认红色    
 extern u16  BACK_COLOR; //背景颜色.默认为白色
-
+#define LCD_WIDTH 480
+#define LCD_HEIGHT 854
 //////////////////////////////////////////////////////////////////////////////////	 
 //-----------------LCD端口定义---------------- 
-#define	LCD_LED PFout(10)  		//LCD背光    		 PB15 	    
+#define	LCD_LED PFout(10)  		//LCD背光      
 //LCD地址结构体
 typedef struct
 {

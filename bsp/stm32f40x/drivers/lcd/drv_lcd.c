@@ -10,7 +10,7 @@
 
 #include "drv_lcd.h"
 #include <finsh.h>
-
+#include "sram_variable.h"
 //#define DEBUG
 #ifdef DEBUG
 #define DEBUG_PRINTF(...)   rt_kprintf(__VA_ARGS__)
@@ -569,7 +569,7 @@ void LCD_Init(void)
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD|RCC_AHB1Periph_GPIOE|RCC_AHB1Periph_GPIOF|RCC_AHB1Periph_GPIOG, ENABLE);
     RCC_AHB3PeriphClockCmd(RCC_AHB3Periph_FSMC,ENABLE);//使能FSMC时钟  
     
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10 | GPIO_Pin_14;        //PF10 推挽输出,控制背光
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10 | GPIO_Pin_14;        //PF10 推挽输出,控制背光,硬reset管脚
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;     //输出模式
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;    //推挽输出
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; //100MHz
@@ -642,7 +642,7 @@ void LCD_Init(void)
 	FSMC_Bank1->BTCR[7]|=0XF<<0; 	//地址建立时间(ADDSET)为15个HCLK 1/168M=6ns*15=90ns	
 	//因为液晶驱动IC的读数据的时候，速度不能太快,尤其是个别奇葩芯片。
 	FSMC_Bank1->BTCR[7]|=60<<8;  	//数据保存时间(DATAST)为60个HCLK	=6*60=360ns
-	#if 0 /*xqy 2019-12-31*/
+	#if 1 /*xqy 2019-12-31*/
 	//写时序控制寄存器  
 	FSMC_Bank1E->BWTR[6]|=0<<28; 	//模式A 	 							    
 	FSMC_Bank1E->BWTR[6]|=9<<0;		//地址建立时间(ADDSET)为9个HCLK=54ns
@@ -651,16 +651,19 @@ void LCD_Init(void)
 	//使能BANK1,区域4
 	FSMC_Bank1->BTCR[6]|=1<<0;		//使能BANK1，区域1	    
 	#endif
+	 #if 0 /*xqy 2020-1-2*/
 	 //重新配置写时序控制寄存器的时序   	 							    
 	FSMC_Bank1E->BWTR[6]&=~(0XF<<0); //地址建立时间清零 	 
 	FSMC_Bank1E->BWTR[6]&=~(0XF<<8); //数据保存时间清零
 	FSMC_Bank1E->BWTR[6]|=3<<0;		   //地址建立时间为3个HCLK =18ns  	 
 	FSMC_Bank1E->BWTR[6]|=2<<8;    	 //数据保存时间为6ns*3个HCLK=18ns
+	 #endif
 	
  	delay_ms(50); // delay 50 ms 
  	LCD_WriteReg(0x0000,0x0001);
 	delay_ms(50); // delay 50 ms 
   	lcddev.id = LCD_ReadReg(0x0000);   
+  	rt_kprintf("lcd init id :%0x4\n",lcddev.id);
    	//************* Start Initial Sequence **********//
     WriteComm(0xFF); // EXTC Command Set enable register 
     WriteData(0xFF); 
@@ -831,9 +834,8 @@ void LCD_Init(void)
     delay_ms(120); 
     WriteComm(0x29); // Display On 
     delay_ms(30);
-	//ili9341_set_display_direction(1);
 	LCD_Display_Dir(0);
-	LCD_Clear(RED);
+	LCD_Clear(BLUE);
 }  
 //清屏函数
 //color:要清屏的填充色
@@ -1185,7 +1187,7 @@ static rt_err_t lcd_control(rt_device_t dev, int cmd, void *args)
 
 		info->bits_per_pixel = 16;
 		info->pixel_format = RTGRAPHIC_PIXEL_FORMAT_RGB565;
-		info->framebuffer = RT_NULL;
+		info->framebuffer = (u8*)sramlcdbuf_1;
 		info->width = 240;
 		info->height = 320;
 	}

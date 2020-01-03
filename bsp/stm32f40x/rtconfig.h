@@ -126,52 +126,9 @@
 
 /* Socket abstraction layer */
 
-#define RT_USING_SAL
-
-/* protocol stack implement */
-
-#define SAL_USING_LWIP
-#define SAL_USING_POSIX
-#define SAL_PROTO_FAMILIES_NUM 4
 
 /* light weight TCP/IP stack */
 
-#define RT_USING_LWIP
-#define RT_USING_LWIP210
-#define RT_LWIP_IGMP
-#define RT_LWIP_ICMP
-#define RT_LWIP_DNS
-
-/* Static IPv4 Address */
-
-#define RT_LWIP_IPADDR "192.168.1.10"
-#define RT_LWIP_GWADDR "192.168.1.1"
-#define RT_LWIP_MSKADDR "255.255.255.0"
-#define RT_LWIP_UDP
-#define RT_LWIP_TCP
-#define RT_LWIP_RAW
-#define RT_MEMP_NUM_NETCONN 8
-#define RT_LWIP_PBUF_NUM 16
-#define RT_LWIP_RAW_PCB_NUM 4
-#define RT_LWIP_UDP_PCB_NUM 4
-#define RT_LWIP_TCP_PCB_NUM 4
-#define RT_LWIP_TCP_SEG_NUM 40
-#define RT_LWIP_TCP_SND_BUF 8196
-#define RT_LWIP_TCP_WND 8196
-#define RT_LWIP_TCPTHREAD_PRIORITY 10
-#define RT_LWIP_TCPTHREAD_MBOX_SIZE 8
-#define RT_LWIP_TCPTHREAD_STACKSIZE 1024
-#define RT_LWIP_ETHTHREAD_PRIORITY 12
-#define RT_LWIP_ETHTHREAD_STACKSIZE 1024
-#define RT_LWIP_ETHTHREAD_MBOX_SIZE 8
-#define RT_LWIP_REASSEMBLY_FRAG
-#define LWIP_NETIF_STATUS_CALLBACK 1
-#define SO_REUSE 1
-#define LWIP_SO_RCVTIMEO 1
-#define LWIP_SO_SNDTIMEO 1
-#define LWIP_SO_RCVBUF 1
-#define RT_LWIP_NETIF_LOOPBACK
-#define LWIP_NETIF_LOOPBACK 1
 
 /* Modbus master and slave stack */
 
@@ -201,13 +158,6 @@
 
 /* Wiced WiFi */
 
-#define PKG_USING_NETUTILS
-#define PKG_NETUTILS_PING
-#define PKG_NETUTILS_TFTP
-#define NETUTILS_TFTP_PORT 69
-#define PKG_NETUTILS_IPERF
-#define PKG_NETUTILS_NETIO
-#define PKG_USING_NETUTILS_LATEST_VERSION
 
 /* IoT Cloud */
 
@@ -241,23 +191,18 @@
 #define GUIENGINE_USING_FONT12
 #define GUIENGINE_USING_FONTHZ
 #define GUIENGINE_USING_HZ_FILE
-#define GUIENGINE_USING_PNG
-#define GUIENGINE_IMAGE_LODEPNG
+#define GUIENGINE_IMAGE_XPM
+#define GUIENGINE_USING_JPG
+#define GUIENGINE_IMAGE_TJPGD
 #define GUIENGINE_IMAGE_BMP
 #define GUIENGINE_IMAGE_CONTAINER
 #define GUIENGINE_USING_DEMO
 
 /* peripheral libraries and drivers */
 
-/* sensors drivers */
-
 
 /* miscellaneous packages */
 
-#define PKG_USING_OPTPARSE
-#define PKG_USING_OPTPARSE_V100
-#define PKG_USING_FASTLZ
-#define PKG_USING_FASTLZ_LATEST_VERSION
 
 /* samples: kernel and components samples */
 
@@ -265,6 +210,4 @@
 #define RT_USING_UART1
 #define RT_USING_UART2
 
-#define RT_MUSIC_VS1003
-#define RT_MUSIC_SOFT_DECODE //»ÌΩ‚
 #endif

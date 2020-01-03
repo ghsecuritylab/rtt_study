@@ -1,10 +1,6 @@
 #include "spblcd.h"
-#include "spb.h"
-#include "dma.h"
-#include "lcd.h"
-#include "delay.h"
-#include "malloc.h"
 #include "usart.h"
+#include "sram_variable.h"
 //////////////////////////////////////////////////////////////////////////////////	 
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32F407开发板
@@ -19,21 +15,21 @@
 ////////////////////////////////////////////////////////////////////////////////// 	
 
 
-u16 *sramlcdbuf;							//SRAM LCD BUFFER,背景图片显存区 
+u16 *sramlcdbuf = sramlcdbuf_1;							//SRAM LCD BUFFER,背景图片显存区 
 
 //在指定位置画点.
 //x,y:坐标
-//color:颜色.
+//color:颜色.从左到右，从上到下
 void slcd_draw_point(u16 x,u16 y,u16 color)
 {	 
-	sramlcdbuf[y+x*spbdev.spbheight+spbdev.frame*spbdev.spbheight*spbdev.spbwidth]=color;
+	sramlcdbuf[(y-1)*lcddev.width + x -1]=color;
 }
 //读取指定位置点的颜色值
 //x,y:坐标
 //返回值:颜色
 u16 slcd_read_point(u16 x,u16 y)
 {
-	return sramlcdbuf[y+x*spbdev.spbheight+spbdev.frame*spbdev.spbheight*spbdev.spbwidth];
+	return sramlcdbuf[(y-1)*lcddev.width + x -1];
 } 
 //填充颜色
 //x,y:起始坐标
@@ -79,13 +75,16 @@ void slcd_dma_init(void)
 	DMA2_Stream0->FCR&=~(1<<2);	//不使用FIFO模式
 	DMA2_Stream0->FCR&=~(3<<0);	//无FIFO 设置  
 } 
+INIT_BOARD_EXPORT(slcd_dma_init);
 
 //开启一次SPI到LCD的DMA的传输
 //x:起始传输地址编号(0~480)
 void slcd_dma_enable(u32 x)
 {	  
-	u32 lcdsize=spbdev.spbwidth*spbdev.spbheight;
+	u32 lcdsize=lcddev.width*lcddev.height;
 	u32 dmatransfered=0;
+	u32 tick,tick_end;
+	tick = rt_tick_get();
 	while(lcdsize)
 	{ 
 		DMA2_Stream0->CR&=~(1<<0);			//关闭DMA传输 
@@ -100,18 +99,22 @@ void slcd_dma_enable(u32 x)
 			DMA2_Stream0->NDTR=lcdsize;	//设置传输长度
 			lcdsize=0;
 		}	
-		DMA2_Stream0->PAR=(u32)(sramlcdbuf+x*spbdev.spbheight+dmatransfered);	
-		dmatransfered+=SLCD_DMA_MAX_TRANS;		
+		DMA2_Stream0->PAR=(u32)(sramlcdbuf+dmatransfered);	
+		dmatransfered+=SLCD_DMA_MAX_TRANS;	
+		lcdsize -= SLCD_DMA_MAX_TRANS;
 		DMA2_Stream0->CR|=1<<0;				//开启DMA传输 		
 		while((DMA2->LISR&(1<<5))==0);		//等待传输完成 
 	} 
 	DMA2_Stream0->CR&=~(1<<0);				//关闭DMA传输 
+	tick_end = rt_tick_get();
+	rt_kprintf("dma transfer tick:%d\n",tick_end - tick);
 }
-//显示一帧,即启动一次spi到lcd的显示.
+//显示一帧,即启动一次dma到lcd的显示.
 //x:坐标偏移量
 void slcd_frame_show(u32 x)
 {  
-	LCD_Scan_Dir(U2D_L2R);		//设置扫描方向  
+	#if 0 /*xqy 2020-1-2*/
+	//LCD_Scan_Dir(U2D_L2R);		//设置扫描方向 从左到右，从上到下 
 	if(lcddev.id==0X9341||lcddev.id==0X5310||lcddev.id==0X5510||lcddev.id==0X6804)
 	{
 		LCD_Set_Window(spbdev.stabarheight,0,spbdev.spbheight,spbdev.spbwidth);
@@ -121,14 +124,29 @@ void slcd_frame_show(u32 x)
 		LCD_Set_Window(0,spbdev.stabarheight,spbdev.spbwidth,spbdev.spbheight);
 		if(lcddev.id!=0X1963)LCD_SetCursor(0,spbdev.stabarheight);//设置光标位置 		
 	}
+	#endif
+	BlockWrite(0,lcddev.width,0,lcddev.height);
 	LCD_WriteRAM_Prepare();     //开始写入GRAM	
 	slcd_dma_enable(x);
-	LCD_Scan_Dir(DFT_SCAN_DIR);	//恢复默认方向
-	LCD_Set_Window(0,0,lcddev.width,lcddev.height);//恢复默认窗口大小
+	//LCD_Scan_Dir(DFT_SCAN_DIR);	//恢复默认方向
+	//LCD_Set_Window(0,0,lcddev.width,lcddev.height);//恢复默认窗口大小
 }
  
+void slcd_test(u16 color)
+{
+    u32 i;
+    u32 len = lcddev.height*lcddev.width;
+    for(i=0;i++;i<len)
+    {   
+        sramlcdbuf[i] = color;
+    }
+    slcd_frame_show(0);
+}
 
+#ifdef RT_USING_FINSH
 
+FINSH_FUNCTION_EXPORT(slcd_test, slcd_test dma);
+#endif
 
 
 
