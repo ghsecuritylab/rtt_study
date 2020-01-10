@@ -14,24 +14,38 @@ extern  u16	 write_gramcmd;	 //写gram指令
 extern	u16  setxcmd;		     //设置x坐标指令
 extern	u16  setycmd;		     //设置y坐标指令	 
 
+
+
+typedef struct
+{
+	rt_uint16_t width;			//LCD 宽度
+	rt_uint16_t height;			//LCD 高度
+	rt_uint16_t id;				//LCD ID
+	rt_uint8_t  dir;			//横屏还是竖屏控制：0，竖屏；1，横屏。	
+	rt_uint16_t	wramcmd;		//开始写gram指令
+	rt_uint16_t setxcmd;		//设置x坐标指令
+	rt_uint16_t setycmd;		//设置y坐标指令 
+} lcd_info_t;
+
+typedef struct
+{
+	volatile rt_uint16_t reg;
+	volatile rt_uint16_t ram;
+} lcd_ili9341_t;
+//A12作为数据命令区分线  设置时STM32内部会右移一位对齐	    
+#define LCD_ILI9341_BASE        ((rt_uint32_t)(0x6C000000 | 0x00001FFE))
+#define ili9341					((lcd_ili9341_t *) LCD_ILI9341_BASE)
+
 //LCD的画笔颜色和背景色	   
 extern u16  BRUSH_COLOR;//默认红色    
 extern u16  BACK_COLOR; //背景颜色.默认为白色
 
-#define LCD_HIGH 854//屏高度
+#define LCD_HIGH 480//屏高度
 #define LCD_WIDTH 480//屏宽度
 
 //////////////////////////////////////////////////////////////////////////////////	 
 //-----------------LCD背光端口定义---------------- 
-#define	LCD_BACK PFout(10)  //LCD背光    	PF10 	    
-
-//A12作为数据命令区分线  设置时STM32内部会右移一位对齐	    
-#define  CMD_BASE     ((u32)(0x6C000000 | 0x00001FFE))
-#define  DATA_BASE    ((u32)(0x6C000000 | 0x00002000))
-
-#define LCD_CMD       ( * (u16 *) CMD_BASE )
-#define LCD_DATA      ( * (u16 *) DATA_BASE)
-	 
+#define	LCD_BACK PFout(10)  //LCD背光    	PF10 	     
 //扫描方向定义
 #define  L2R_U2D  0 //从左到右,从上到下
 #define  L2R_D2U  1 //从左到右,从下到上

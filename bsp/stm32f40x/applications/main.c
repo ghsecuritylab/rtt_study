@@ -39,6 +39,7 @@ int main(void)
     rt_device_t rt_flash_device;
     int offset = 512*100;
     int ret;
+    //hello_sram();
     rt_flash_device = rt_device_find("w25qxx");
     if(rt_flash_device == NULL)
         rt_kprintf("没找到设备\r\n");

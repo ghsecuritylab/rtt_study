@@ -19,27 +19,7 @@
 #define DEBUG_PRINTF(...)   
 #endif
 
-typedef struct
-{
-	rt_uint16_t width;			//LCD 宽度
-	rt_uint16_t height;			//LCD 高度
-	rt_uint16_t id;				//LCD ID
-	rt_uint8_t  dir;			//横屏还是竖屏控制：0，竖屏；1，横屏。	
-	rt_uint16_t	wramcmd;		//开始写gram指令
-	rt_uint16_t setxcmd;		//设置x坐标指令
-	rt_uint16_t setycmd;		//设置y坐标指令 
-} lcd_info_t;
-
-typedef struct
-{
-	volatile rt_uint16_t reg;
-	volatile rt_uint16_t ram;
-} lcd_ili9341_t;
-//A12作为数据命令区分线  设置时STM32内部会右移一位对齐	    
-#define LCD_ILI9341_BASE        ((rt_uint32_t)(0x6C000000 | 0x00001FFE))
-#define ili9341					((lcd_ili9341_t *) LCD_ILI9341_BASE)
-
-static lcd_info_t lcddev;
+lcd_info_t lcddev;
 
 void delay_us(rt_uint32_t nus)
 {
@@ -70,7 +50,7 @@ static void WriteComm(rt_uint16_t regval)
 {
 	ili9341->reg = regval;
 }
-static void WriteData(rt_uint16_t regval)
+void WriteData(rt_uint16_t regval)
 {
 	ili9341->ram = regval;
 }
@@ -200,6 +180,7 @@ void ili9341_set_backlight(rt_uint8_t pwm)
 //屏驱动提供，上面的是其她屏的
 void BlockWrite(unsigned int Xstart,unsigned int Xend,unsigned int Ystart,unsigned int Yend) 
 {
+    rt_kprintf("xs:%d xe:%d,ys:%d ye:%d\n",Xstart ,Xend ,Ystart ,Yend);
 	WriteComm(0x2a);   
 	WriteData(Xstart>>8);
 	WriteData(Xstart&0xff);
@@ -237,10 +218,10 @@ void ili9341_set_display_direction(rt_uint8_t dir)
 	lcddev.wramcmd = 0X2C;
 	lcddev.setxcmd = 0X2A;
 	lcddev.setycmd = 0X2B;
-
+    
 	//ili9341_set_scan_direction(L2R_D2U);
 }
-static void LCD_FSMC_Config(void)
+void LCD_FSMC_Config(void)
 {
     GPIO_InitTypeDef  GPIO_InitStructure;
     FSMC_NORSRAMInitTypeDef  FSMC_NORSRAMInitStructure;
@@ -308,21 +289,21 @@ static void LCD_FSMC_Config(void)
     GPIO_PinAFConfig(GPIOG,GPIO_PinSource2,GPIO_AF_FSMC); 
     GPIO_PinAFConfig(GPIOG,GPIO_PinSource12,GPIO_AF_FSMC);   
 
-    readWriteTiming.FSMC_AddressSetupTime = 0XF;   //地址建立时间（ADDSET） 16个HCLK 1/168M=6ns*16=96ns  
+    readWriteTiming.FSMC_AddressSetupTime = 2;   //地址建立时间（ADDSET） 16个HCLK 1/168M=6ns*16=96ns  
     readWriteTiming.FSMC_AddressHoldTime = 0x00;   //地址保持时间（ADDHLD）
-    readWriteTiming.FSMC_DataSetupTime = 60;           //数据保存时间 60个HCLK = 6*60=360ns
+    readWriteTiming.FSMC_DataSetupTime = 0xb;           //数据保存时间 60个HCLK = 6*60=360ns
     readWriteTiming.FSMC_BusTurnAroundDuration = 0x00;
     readWriteTiming.FSMC_CLKDivision = 0x00;
     readWriteTiming.FSMC_DataLatency = 0x00;
     readWriteTiming.FSMC_AccessMode = FSMC_AccessMode_A;   
     
-    writeTiming.FSMC_AddressSetupTime =8;        //地址建立时间（ADDSET）9个HCLK =54ns 
+    writeTiming.FSMC_AddressSetupTime =2;        //地址建立时间（ADDSET）9个HCLK =54ns 
     writeTiming.FSMC_AddressHoldTime = 0x00;   //地址保持时间 
-    writeTiming.FSMC_DataSetupTime = 7;            //数据保存时间 6ns*9个HCLK=54ns
+    writeTiming.FSMC_DataSetupTime = 0xb;            //数据保存时间 6ns*9个HCLK=54ns
     writeTiming.FSMC_BusTurnAroundDuration = 0x00;
     writeTiming.FSMC_CLKDivision = 0x00;
     writeTiming.FSMC_DataLatency = 0x00;
-    writeTiming.FSMC_AccessMode = FSMC_AccessMode_B;   
+    writeTiming.FSMC_AccessMode = FSMC_AccessMode_A;   
 
     FSMC_NORSRAMInitStructure.FSMC_Bank = FSMC_Bank1_NORSRAM4;  
     FSMC_NORSRAMInitStructure.FSMC_DataAddressMux = FSMC_DataAddressMux_Disable; 
@@ -340,9 +321,31 @@ static void LCD_FSMC_Config(void)
     FSMC_NORSRAMInitStructure.FSMC_ReadWriteTimingStruct = &readWriteTiming;     //读写时序
     FSMC_NORSRAMInitStructure.FSMC_WriteTimingStruct = &writeTiming;             //写时序
     FSMC_NORSRAMInit(&FSMC_NORSRAMInitStructure);  //初始化FSMC
-    FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM4, ENABLE);  //使能Bank1           
-    delay_ms(50); 
-}
+    FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM4, ENABLE);  //使能Bank1      
+    //寄存器清零
+	//bank1有NE1~4,每一个有一个BCR+TCR，所以总共八个寄存器。
+	//这里我们使用NE1 ，也就对应BTCR[0],[1]。				    
+	FSMC_Bank1->BTCR[6]=0X00000000;
+	FSMC_Bank1->BTCR[7]=0X00000000;
+	FSMC_Bank1E->BWTR[6]=0X00000000;
+	//操作BCR寄存器	使用异步模式
+	FSMC_Bank1->BTCR[6]|=1<<12;		//存储器写使能
+	FSMC_Bank1->BTCR[6]|=1<<14;		//读写使用不同的时序
+	FSMC_Bank1->BTCR[6]|=1<<4; 		//存储器数据宽度为16bit 	    
+	//操作BTR寄存器	
+	//读时序控制寄存器 							    
+	FSMC_Bank1->BTCR[7]|=0<<28;		//模式A 	 						  	 
+	FSMC_Bank1->BTCR[7]|=0XF<<0; 	//地址建立时间(ADDSET)为15个HCLK 1/168M=6ns*15=90ns	
+	//因为液晶驱动IC的读数据的时候，速度不能太快,尤其是个别奇葩芯片。
+	FSMC_Bank1->BTCR[7]|=60<<8;  	//数据保存时间(DATAST)为60个HCLK	=6*60=360ns
+	//写时序控制寄存器  
+	FSMC_Bank1E->BWTR[6]|=0<<28; 	//模式A 	 							    
+	FSMC_Bank1E->BWTR[6]|=9<<0;		//地址建立时间(ADDSET)为9个HCLK=54ns
+ 	//9个HCLK（HCLK=168M）,某些液晶驱动IC的写信号脉宽，最少也得50ns。  	 
+	FSMC_Bank1E->BWTR[6]|=8<<8; 	//数据保存时间(DATAST)为6ns*9个HCLK=54ns
+	//使能BANK1,区域4
+	FSMC_Bank1->BTCR[6]|=1<<0;		//使能BANK1，区域1	 
+    }
 void lcd_reset(void)
 {
     GPIO_ResetBits(GPIOF, GPIO_Pin_14);
@@ -353,16 +356,16 @@ void lcd_reset(void)
 
 void _lcd_low_level_init(void)
 {
-    LCD_FSMC_Config();
+    //LCD_FSMC_Config();
     lcd_reset();
     lcddev.height = LCD_HIGH;
     lcddev.width  = LCD_WIDTH;
     //重新配置写时序控制寄存器的时序   	 							    
-	FSMC_Bank1E->BWTR[6]&=~(0XF<<0); //地址建立时间清零 	 
-	FSMC_Bank1E->BWTR[6]&=~(0XF<<8); //数据保存时间清零
-	FSMC_Bank1E->BWTR[6]|=3<<0;		   //地址建立时间为3个HCLK =18ns  	 
-	FSMC_Bank1E->BWTR[6]|=2<<8;    	 //数据保存时间为6ns*3个HCLK=18ns
-	delay_ms(50);
+	//FSMC_Bank1E->BWTR[6]&=~(0XF<<0); //地址建立时间清零 	 
+	//FSMC_Bank1E->BWTR[6]&=~(0XF<<8); //数据保存时间清零
+	//FSMC_Bank1E->BWTR[6]|=3<<0;		   //地址建立时间为3个HCLK =18ns  	 
+	//FSMC_Bank1E->BWTR[6]|=2<<8;    	 //数据保存时间为6ns*3个HCLK=18ns
+	//delay_ms(50);
 	//************* Start Initial Sequence **********//
     WriteComm(0xFF); // EXTC Command Set enable register 
     WriteData(0xFF); 
@@ -543,58 +546,9 @@ void draw_screen(u16 color)
 {
     LCD_Clear(color);
 }
-static u32 lcd_dma_tick_start = 0;
-static u32 lcd_dma_tick_end = 0;
-#define HEAP_SIZE_SRAM 500*1024
-static u8 sram_heap[HEAP_SIZE_SRAM] __attribute__((aligned(4)));
-static u16 color_data __attribute__((aligned(4))) = 0;
-void fmsc_dma_write_data(u16* lcd_data,u32 len,u8 flag/*lcd_data 地址是否增长 0不，1增长*/)
-{
-    DMA_InitTypeDef            DMA_InitStructure;
-	NVIC_InitTypeDef				NVIC_InitStructure;
-	
-    rt_kprintf("fmsc_dma_init enter\n");
-	DMA_DeInit(DMA2_Stream1);//清空之前该stream4上的所有中断标志
-	//两个DMA，每个8个数据流，每个数据流有8个通道
-    while (DMA_GetCmdStatus(DMA2_Stream1) != DISABLE){}//等待DMA可配置 
-    
-	DMA_InitStructure.DMA_Channel = DMA_Channel_0;  //通道选择
-	DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)lcd_data;//外部ram数据地址
-	DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)&(ili9341->ram);//LCD屏的数据地址
-	DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToMemory;//内存到内存
-	DMA_InitStructure.DMA_BufferSize = len;//
-	if(flag)
-	    DMA_InitStructure.DMA_PeripheralInc = DMA_MemoryInc_Enable;//FMSC ram增加
-    else
-        DMA_InitStructure.DMA_PeripheralInc = DMA_MemoryInc_Disable;//FMSC ram增加
-	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Disable;//LCD->RAM自动增加关闭
-	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;//半字传输16位
-	DMA_InitStructure.DMA_MemoryDataSize = DMA_PeripheralDataSize_HalfWord;
-	DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;//应该是周期模式
-	DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;//优先级非常高
-    DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;         
-    DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;
-    DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;//存储器突发单次传输
-    DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;//外设突发单次传输
-	DMA_Init(DMA2_Stream1, &DMA_InitStructure);
-	
-	DMA_ClearITPendingBit(DMA2_Stream1,DMA_IT_TCIF1); 
-	DMA_ITConfig(DMA2_Stream1,DMA_IT_TC,ENABLE);
-	NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream1_IRQn;//设置DMA中断
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-	NVIC_Init(&NVIC_InitStructure);
-	DMA_Cmd(DMA2_Stream1, ENABLE);
-	lcd_dma_tick_start = rt_tick_get();
-	rt_kprintf("fmsc_dma start\n");
-}
 void DMA2_Stream1_IRQHandler(void)
 {
     rt_interrupt_enter();
-    //rt_sem_release(dma_int);
-    lcd_dma_tick_end = rt_tick_get();
-    rt_kprintf("DMA2_Stream1_IRQHandler tick:%d\n",lcd_dma_tick_end - lcd_dma_tick_start);
 	if(DMA_GetITStatus(DMA2_Stream1,DMA_IT_TCIF1))//传输完成中断标志
     {
         rt_kprintf("全完成\n");
@@ -606,43 +560,7 @@ void DMA2_Stream1_IRQHandler(void)
 	DMA_ClearITPendingBit(DMA2_Stream1,DMA_IT_TCIF1);
 	//rt_interrupt_leave();
 }
-void sram_zroe_speed_test(void)
-{
-    u32 s_tick = 0;
-    u32 e_tick = 0;
-    s_tick = rt_tick_get();
-    rt_memset((void*)0x68000000,0,1024*1024);
-    e_tick = rt_tick_get();
-    rt_kprintf("sram_zroe_speed_test tick :%d\n",e_tick - s_tick);
-}
-void fmsc_dma_test(u16 color,u8 flag)//flag 0:内部ram中的单色不递增数据,1:外部ram中的单色 2:外部ram递增
-{
-    u16 color_1 = color;
-    if(flag ==0)
-    {
-        rt_kprintf("内部ram不递增\n");
-        BlockWrite(0,0+480-1,0,0+845-1);
-        fmsc_dma_write_data(&color_1,480*845,0);
-    }
-    else if(flag ==1 )
-    {
-        rt_kprintf("外部ram不递增\n");
-        color_data = color;
-        BlockWrite(0,0+480-1,0,0+845-1);
-        fmsc_dma_write_data(&color_data,480*845,0);
-    }
-    else if(flag == 2)
-    {
-        u32 e_tick = 0;
-        u32 s_tick = rt_tick_get();
-        rt_memset(sram_heap,0x0,480*845*2);
-        e_tick = rt_tick_get();
-        rt_kprintf("memset tick :%d\n",e_tick - s_tick);
-        BlockWrite(0,0+480-1,0,0+845-1);
-        fmsc_dma_write_data((u16*)sram_heap,480*845,1);
-    }
-    return ;
-}
+
 static rt_err_t lcd_init(rt_device_t dev)
 {
 	return RT_EOK;
@@ -704,7 +622,7 @@ static void lcd_set_pixel(uint16_t color, int x, int y)
 }
 FINSH_FUNCTION_EXPORT(lcd_set_pixel, set pixel in lcd display);
 FINSH_FUNCTION_EXPORT(draw_screen, draw_screen);
-FINSH_FUNCTION_EXPORT(fmsc_dma_test, void fmsc_dma_test u16 color u8 flag flag 0:内部ram中的单色不递增数据 1:外部ram中的单色 2:外部ram递增 );
+//FINSH_FUNCTION_EXPORT(fmsc_dma_test, void fmsc_dma_test u16 color u8 flag flag 0:内部ram中的单色不递增数据 1:外部ram中的单色 2:外部ram递增 );
 
 #endif
 

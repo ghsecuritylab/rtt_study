@@ -85,7 +85,7 @@ void SysTick_Handler(void)
  * This function will initial STM32 board.
  */
 #define HEAP_SIZE_SRAM 500*1024
-static u8 sram_heap[HEAP_SIZE_SRAM];
+//static u8 sram_heap[HEAP_SIZE_SRAM];
 void rt_hw_board_init()
 {
     /* NVIC Configuration */
@@ -93,10 +93,11 @@ void rt_hw_board_init()
 
     /* Configure the SysTick */
     SysTick_Configuration();
+    LCD_FSMC_Config();
     FSMC_SRAM_Init();//必须放到堆初始化前面，不然堆初始化会死机
 #ifdef RT_USING_HEAP
     rt_system_heap_init((void*)STM32_SRAM_BEGIN, (void*)STM32_SRAM_END);//使用内部sram作为堆
-    rt_memset(sram_heap,0,HEAP_SIZE_SRAM);//将堆清零
+    //rt_memset(sram_heap,0,HEAP_SIZE_SRAM);//将堆清零
     //rt_system_heap_init((void*)sram_heap, (void*)(sram_heap+HEAP_SIZE_SRAM));//使用fmsc外部SRAM作为堆
 #endif
     

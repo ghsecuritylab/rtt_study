@@ -128,7 +128,7 @@ void FSMC_SRAM_Init(void)
 
     FSMC_NORSRAMInit(&FSMC_NORSRAMInitStructure);  //初始化FSMC配置
  	FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM3, ENABLE);  // 使能BANK1区域3	
- 	//rt_kprintf("fsmc_sram_init ok\n");
+ 	
 }
 	
 /****************************************************************************
