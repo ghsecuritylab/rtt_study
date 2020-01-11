@@ -180,7 +180,7 @@ void ili9341_set_backlight(rt_uint8_t pwm)
 //屏驱动提供，上面的是其她屏的
 void BlockWrite(unsigned int Xstart,unsigned int Xend,unsigned int Ystart,unsigned int Yend) 
 {
-    rt_kprintf("xs:%d xe:%d,ys:%d ye:%d\n",Xstart ,Xend ,Ystart ,Yend);
+    //rt_kprintf("xs:%d xe:%d,ys:%d ye:%d\n",Xstart ,Xend ,Ystart ,Yend);
 	WriteComm(0x2a);   
 	WriteData(Xstart>>8);
 	WriteData(Xstart&0xff);
