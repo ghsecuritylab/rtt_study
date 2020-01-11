@@ -2,7 +2,10 @@
 #define __DRV_LCD_H__		
 
 #include <rtdevice.h>
-#include "stm32f4xx.h"										 
+#include "stm32f4xx.h"	
+#include "sram_variable.h"
+
+
 //////////////////////////////////////////////////////////////////////////////////	 
  
 //LCD驱动参数
@@ -41,7 +44,7 @@ extern u16  BRUSH_COLOR;//默认红色
 extern u16  BACK_COLOR; //背景颜色.默认为白色
 
 #define LCD_HIGH 480//屏高度
-#define LCD_WIDTH 480//屏宽度
+#define LCD_WIDTH 320//屏宽度
 
 //////////////////////////////////////////////////////////////////////////////////	 
 //-----------------LCD背光端口定义---------------- 

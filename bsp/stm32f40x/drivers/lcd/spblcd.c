@@ -23,6 +23,7 @@
 
 extern lcd_info_t lcddev;
 static rt_sem_t lcd_dma_int = RT_NULL;
+static rt_mutex_t lcd_mutex = RT_NULL;
 
 //在指定位置画点.
 //x,y:坐标
@@ -144,7 +145,7 @@ void slcd_dma_enable(u32 x)
 //x:坐标偏移量
 void slcd_frame_show(void)
 {  
-	BlockWrite(0,lcddev.width,0,lcddev.height);
+	BlockWrite(0,lcddev.width-1,0,lcddev.height-1);
 	slcd_dma_enable(1);
 }
 void fill_sram(u16 color)
@@ -189,12 +190,26 @@ void sem_send(void)
 {
     rt_sem_release(lcd_dma_int);
 }
+void lcd_mutex_take(void)
+{
+    rt_mutex_take(lcd_mutex,RT_WAITING_FOREVER);
+}
+void lcd_mutex_release(void)
+{
+    rt_mutex_release(lcd_mutex);
+}
 static void lcd_service_task(void *param)
 {
     lcd_dma_int = rt_sem_create("lcd_dma_int",0,RT_IPC_FLAG_FIFO);
     if (lcd_dma_int == RT_NULL)
     {
-       // music_log("lcd_dma_int create fail!\n");
+        rt_kprintf("lcd_dma_int create fail!\n");
+        return ;
+    }
+    lcd_mutex = rt_mutex_create("lcd_mutex",RT_IPC_FLAG_FIFO);
+    if (lcd_mutex == RT_NULL)
+    {
+        rt_kprintf("lcd_mutex create fail!\n");
         return ;
     }
     while (1)

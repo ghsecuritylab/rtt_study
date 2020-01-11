@@ -538,7 +538,8 @@ void _lcd_low_level_init(void)
     delay_ms(30);
 	//ili9341_set_backlight(255);//背光设置
 	ili9341_set_display_direction(1);
-	LCD_Clear(RED);
+	//LCD_Clear(RED);
+	Lcd_ColorBox(0,0,480,854,0);
 	
 }
 
@@ -546,21 +547,6 @@ void draw_screen(u16 color)
 {
     LCD_Clear(color);
 }
-void DMA2_Stream1_IRQHandler(void)
-{
-    rt_interrupt_enter();
-	if(DMA_GetITStatus(DMA2_Stream1,DMA_IT_TCIF1))//传输完成中断标志
-    {
-        rt_kprintf("全完成\n");
-    }
-	else if(DMA_GetITStatus(DMA2_Stream1,DMA_IT_HTIF1))//传输一半完成中断标志
-	{
-        rt_kprintf("半完成\n");
-    }
-	DMA_ClearITPendingBit(DMA2_Stream1,DMA_IT_TCIF1);
-	//rt_interrupt_leave();
-}
-
 static rt_err_t lcd_init(rt_device_t dev)
 {
 	return RT_EOK;
@@ -578,6 +564,7 @@ static rt_err_t lcd_close(rt_device_t dev)
 
 static rt_err_t lcd_control(rt_device_t dev, int cmd, void *args)
 {
+    //rt_kprintf("lcd ctl:%d\n",cmd);
 	switch (cmd)
 	{
 	case RTGRAPHIC_CTRL_GET_INFO:
@@ -589,14 +576,16 @@ static rt_err_t lcd_control(rt_device_t dev, int cmd, void *args)
 
 		info->bits_per_pixel = 16;
 		info->pixel_format = RTGRAPHIC_PIXEL_FORMAT_RGB565;
-		info->framebuffer = RT_NULL;
-		info->width = 240;
-		info->height = 320;
+		info->framebuffer = (u8*)sramlcdbuf;
+		info->width = LCD_WIDTH;
+		info->height = LCD_HIGH;
 	}
 	break;
 
 	case RTGRAPHIC_CTRL_RECT_UPDATE:
 		/* nothong to be done */
+		//rt_kprintf("lcd ctl\n");
+		sem_send();
 		break;
 
 	default:
