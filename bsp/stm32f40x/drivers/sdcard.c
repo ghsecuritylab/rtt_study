@@ -1767,40 +1767,6 @@ static rt_size_t rt_sdcard_read(rt_device_t dev, rt_off_t pos, void* buffer, rt_
     retry = 3;
     while(retry)
     {
-        /* read all sectors */
-        #if 0 
-        if (((rt_uint32_t)buffer % 4 != 0) ||
-                ((rt_uint32_t)buffer > 0x20080000))
-        {
-            rt_uint32_t index;
-            rt_kprintf("658\r\n");
-            /* which is not alignment with 4 or chip SRAM */
-            for (index = 0; index < size; index ++)
-            {
-                rt_kprintf("112\r\n");
-                status = SD_ReadBlock(_sdcard_buffer,
-                                      (part.offset + index + pos) * factor, SECTOR_SIZE);
-                rt_kprintf("18712\r\n");
-                if (status != SD_OK) break;
-
-                /* copy to the buffer */
-                rt_memcpy(((rt_uint8_t*)buffer + index * SECTOR_SIZE), _sdcard_buffer, SECTOR_SIZE);
-            }
-        }
-        else
-        {
-            rt_kprintf("11982\r\n");
-            if (size == 1)
-            {
-                status = SD_ReadBlock(buffer ,\
-                                      (part.offset + pos) * factor, SECTOR_SIZE);
-            }
-            else
-            {
-                status = SD_ReadMultiBlocks((u8 *)buffer,(part.offset + pos) * factor, SECTOR_SIZE, size);
-            }
-        }
-        #endif
         status = SD_ReadDisk(buffer,(part.offset + pos) * factor,size);
         if (status == SD_OK)
             break;

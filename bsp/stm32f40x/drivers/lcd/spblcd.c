@@ -145,7 +145,7 @@ void slcd_dma_enable(u32 x)
 //x:坐标偏移量
 void slcd_frame_show(void)
 {  
-	BlockWrite(0,lcddev.width-1,0,lcddev.height-1);
+	BlockWrite(0,lcddev.width-1,0+265,lcddev.height-1+265);//向下偏移256，放到中央
 	slcd_dma_enable(1);
 }
 void fill_sram(u16 color)
@@ -234,7 +234,7 @@ void lcd_dma_startup(void)
     tid = rt_thread_create("lcd_dma",
                            lcd_service_task, 
                            (void *) 0,
-                           2048,
+                           512,
                            RT_LCD_THREAD_PRIORITY,
                            20);
     if (tid != RT_NULL)

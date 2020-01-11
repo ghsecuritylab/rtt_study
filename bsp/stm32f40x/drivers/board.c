@@ -97,6 +97,9 @@ void rt_hw_board_init()
     FSMC_SRAM_Init();//必须放到堆初始化前面，不然堆初始化会死机
 #ifdef RT_USING_HEAP
     rt_system_heap_init((void*)STM32_SRAM_BEGIN, (void*)STM32_SRAM_END);//使用内部sram作为堆
+    my_mem_init(1);		//初始化外部内存池
+    
+    //rt_system_heap_init((void*)STM32_EXT_SRAM_BEGIN, (void*)STM32_EXT_SRAM_END);//使用外部sram作为堆
     //rt_memset(sram_heap,0,HEAP_SIZE_SRAM);//将堆清零
     //rt_system_heap_init((void*)sram_heap, (void*)(sram_heap+HEAP_SIZE_SRAM));//使用fmsc外部SRAM作为堆
 #endif
@@ -106,7 +109,8 @@ void rt_hw_board_init()
 #ifdef RT_USING_CONSOLE
     rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
 #endif	
-    //rt_gui_demo_init();
+    rt_kprintf("malloc :%08x,%08x\n",STM32_SRAM_BEGIN,STM32_SRAM_END);
+   // malloc_test();
 }
 
 /*@}*/

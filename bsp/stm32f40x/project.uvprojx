@@ -538,6 +538,11 @@
               <FilePath>drivers\lcd\drv_lcd.c</FilePath>
             </File>
             <File>
+              <FileName>spblcd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\lcd\spblcd.c</FilePath>
+            </File>
+            <File>
               <FileName>drv_sram.c</FileName>
               <FileType>1</FileType>
               <FilePath>drivers\sram\drv_sram.c</FilePath>
@@ -561,11 +566,6 @@
               <FileName>w25qxx.c</FileName>
               <FileType>1</FileType>
               <FilePath>drivers\w25qxx.c</FilePath>
-            </File>
-            <File>
-              <FileName>spblcd.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\drivers\lcd\spblcd.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1070,6 +1070,11 @@
               <FileName>tjpgd.c</FileName>
               <FileType>1</FileType>
               <FilePath>packages\gui_engine-latest\libraries\tjpgd1a\tjpgd.c</FilePath>
+            </File>
+            <File>
+              <FileName>malloc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\drivers\malloc.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -276,6 +276,13 @@ void *rt_malloc(rt_size_t size)
 
     if (size == 0)
         return RT_NULL;
+    {
+        if(size > 25*1024)
+        {
+            rt_kprintf("malloc from ext sram size:%d\n",size);
+            return (void *)mymalloc(1,size);
+        }
+    }
 
     RT_DEBUG_NOT_IN_INTERRUPT;
 
@@ -424,9 +431,15 @@ void *rt_realloc(void *rmem, rt_size_t newsize)
     rt_size_t ptr, ptr2;
     struct heap_mem *mem, *mem2;
     void *nmem;
-
+    {
+        if(rmem > (void *)0x68000000)
+        {
+            rt_kprintf("rt_realloc from ext sram ptr:%08x,size:%d\n",rmem,newsize);
+            return (void *)myrealloc(1,rmem,newsize);
+        }
+    }
     RT_DEBUG_NOT_IN_INTERRUPT;
-
+    
     /* alignment size */
     newsize = RT_ALIGN(newsize, RT_ALIGN_SIZE);
     if (newsize > mem_size_aligned)
@@ -549,7 +562,14 @@ void rt_free(void *rmem)
 
     if (rmem == RT_NULL)
         return;
-
+    {
+        if(rmem > (void *)0x68000000)
+        {
+            rt_kprintf("free from ext sram ptr:%08x\n",rmem);
+            myfree(1,rmem);
+					  return ;
+        }
+    }
     RT_DEBUG_NOT_IN_INTERRUPT;
 
     RT_ASSERT((((rt_ubase_t)rmem) & (RT_ALIGN_SIZE - 1)) == 0);
