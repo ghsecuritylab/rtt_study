@@ -98,7 +98,7 @@ void rt_hw_board_init()
 #ifdef RT_USING_HEAP
     rt_system_heap_init((void*)STM32_SRAM_BEGIN, (void*)STM32_SRAM_END);//使用内部sram作为堆
     my_mem_init(1);		//初始化外部内存池
-    
+    slcd_malloc();
     //rt_system_heap_init((void*)STM32_EXT_SRAM_BEGIN, (void*)STM32_EXT_SRAM_END);//使用外部sram作为堆
     //rt_memset(sram_heap,0,HEAP_SIZE_SRAM);//将堆清零
     //rt_system_heap_init((void*)sram_heap, (void*)(sram_heap+HEAP_SIZE_SRAM));//使用fmsc外部SRAM作为堆

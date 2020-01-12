@@ -24,7 +24,14 @@
 extern lcd_info_t lcddev;
 static rt_sem_t lcd_dma_int = RT_NULL;
 static rt_mutex_t lcd_mutex = RT_NULL;
+u16 *sramlcdbuf = NULL;
 
+void slcd_malloc(void)
+{
+    sramlcdbuf = (u16*)mymalloc(1,LCD_HIGH_1*LCD_WIDTH_1*2);
+    if(!sramlcdbuf)
+        rt_kprintf("slcd malloc fail\n");
+}
 //在指定位置画点.
 //x,y:坐标
 //color:颜色.
@@ -161,12 +168,10 @@ void screen_update(void)
 {
     u32 i;
     u16 data;
-    BlockWrite(0,lcddev.width-1,0,lcddev.height-1);
+    BlockWrite(0,lcddev.width-1,0+265,lcddev.height-1+265);//向下偏移256，放到中央
     for(i=0;i<lcddev.height*lcddev.width;i++)
     {
-        data = sramlcdbuf[i];
-        //ili9341->ram = data;
-        WriteData(data);
+        WriteData(sramlcdbuf[i]);
     }
 }
 void screen_color(u16 color)
@@ -256,6 +261,7 @@ FINSH_FUNCTION_EXPORT(fill_sram, void fill_sram(u16 color));
 FINSH_FUNCTION_EXPORT(screen_update, screen_update);
 FINSH_FUNCTION_EXPORT(screen_color, screen_color);
 FINSH_FUNCTION_EXPORT(sem_send, sem_send);
+MSH_CMD_EXPORT(screen_update, ----screen_update----);
 
 
 #endif

@@ -585,7 +585,7 @@ static rt_err_t lcd_control(rt_device_t dev, int cmd, void *args)
 	case RTGRAPHIC_CTRL_RECT_UPDATE:
 		/* nothong to be done */
 		//rt_kprintf("lcd ctl\n");
-		sem_send();
+		//sem_send();
 		break;
 
 	default:
