@@ -615,7 +615,7 @@ static void vs_music_service_task(void *param)
 
             if(vs_ctl.vs_status == 2)
             {
-                dev_record_doing();
+                //dev_record_doing();
             }
             continue;
         }

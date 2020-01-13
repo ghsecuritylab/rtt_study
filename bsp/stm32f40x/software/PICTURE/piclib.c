@@ -15,6 +15,7 @@
 //无
 //////////////////////////////////////////////////////////////////////////////////
  //文件类型列表
+#define RT_PIC_THREAD_PRIORITY 5
 u8*const FILE_TYPE_TBL[FILE_MAX_TYPE_NUM][FILE_MAX_SUBT_NUM]=
 {
 {"BIN"},			//BIN文件
@@ -30,6 +31,7 @@ _pic_info picinfo;	 	//图片信息
 _pic_phy pic_phy;		//图片显示物理接口	
 static struct rtgui_driver _driver;
 static struct rtgui_driver *_current_driver = &_driver;
+static rt_sem_t pic_sem = RT_NULL;
 
 rt_err_t rtgui_set_device(rt_device_t device)
 {
@@ -68,7 +70,7 @@ void gui_init(void)
     if(device == RT_NULL)
     {
         rt_kprintf("Not found LCD driver\n");
-        return RT_ERROR;
+        return ;
     }
     /* set graphic device */
     err = rtgui_set_device(device);
@@ -289,6 +291,7 @@ u8 ai_load_picfile(const u8 *filename,u16 x,u16 y,u16 width,u16 height,u8 fast)
 {	
 	u8	res;//返回值
 	u8 temp;	
+	u32 tick,tick_end;
 	if((x+width)>picinfo.lcdwidth)
 	    return PIC_WINDOW_ERR;		//x坐标超范围了.
 	if((y+height)>picinfo.lcdheight)
@@ -312,6 +315,7 @@ u8 ai_load_picfile(const u8 *filename,u16 x,u16 y,u16 width,u16 height,u8 fast)
 	picinfo.S_XOFF=x;
 	//文件名传递		 
 	temp=f_typetell((u8*)filename);	//得到文件的类型
+	tick = rt_tick_get();
 	switch(temp)
 	{											  
 		case T_BMP:
@@ -328,7 +332,8 @@ u8 ai_load_picfile(const u8 *filename,u16 x,u16 y,u16 width,u16 height,u8 fast)
 	 		res=PIC_FORMAT_ERR;  						//非图片格式!!!  
 			break;
 	}  
-	screen_update();
+	tick_end = rt_tick_get();
+	//rt_kprintf("tick1:%d\n",tick_end-tick);
 	return res;
 }
 //动态分配内存
@@ -365,10 +370,72 @@ int pic_auto_play(char * file_dir_name)
     rt_memset(temp_file_name,0,60);
     rt_strncpy(temp_file_name,file_dir_name,rt_strlen(file_dir_name));
     rt_strncpy(temp_file_name+rt_strlen(temp_file_name),file_info->d_name,rt_strlen(file_info->d_name));
-    rt_kprintf("当前图片为=%s\n",temp_file_name);
+    //rt_kprintf("当前图片为=%s\n",temp_file_name);
     ai_load_picfile(temp_file_name,0,0,_current_driver->width,_current_driver->height,0);
     return 0;
 }
+static void pic_service_task(void *param)
+{
+    pic_sem = rt_sem_create("pic_sem",0,RT_IPC_FLAG_FIFO);
+    if (pic_sem == RT_NULL)
+    {
+        rt_kprintf("pic_sem create fail!\n");
+        return ;
+    }
+    while (1)
+    {
+        rt_sem_take(pic_sem,RT_WAITING_FOREVER);
+        pic_auto_play("/picture/");
+        screen_update();
+        screen_update();
+        rt_thread_delay(1500);
+        rt_sem_release(pic_sem);
+    }
+}
+void pic_task_startup(void)
+{
+    rt_thread_t tid;
+    
+    tid = rt_thread_find("pic_task");
+    if(tid)
+    {
+        rt_kprintf("runing this task\n");
+        return;
+    }
+        
+    tid = rt_thread_create("pic_task",
+                           pic_service_task, 
+                           (void *) 0,
+                           1024,
+                           RT_PIC_THREAD_PRIORITY,
+                           20);
+    if (tid != RT_NULL)
+    {
+        rt_thread_startup(tid);
+        rt_kprintf("lcd_service_task init done...\n");
+    }
+    else
+    {
+        rt_kprintf("lcd_service_task init fail...\n");
+    }
+}
+INIT_APP_EXPORT(pic_task_startup);
+
+void pic(void)
+{
+    if(!pic_sem)
+    {
+        rt_kprintf("please init pic_sem first\n");
+        return ;
+    }
+    rt_sem_release(pic_sem);
+}
+#ifdef RT_USING_FINSH
+#include <finsh.h>
+MSH_CMD_EXPORT(pic, ----pic----);
+
+
+#endif
 
 
 

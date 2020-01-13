@@ -168,11 +168,16 @@ void screen_update(void)
 {
     u32 i;
     u16 data;
+    u32 tick,tick_end;
+
+    tick = rt_tick_get();
     BlockWrite(0,lcddev.width-1,0+265,lcddev.height-1+265);//向下偏移256，放到中央
     for(i=0;i<lcddev.height*lcddev.width;i++)
     {
         WriteData(sramlcdbuf[i]);
     }
+    tick_end = rt_tick_get();
+    //rt_kprintf("tick up:%d\n",tick_end-tick);
 }
 void screen_color(u16 color)
 {
@@ -220,7 +225,8 @@ static void lcd_service_task(void *param)
     while (1)
     {
         rt_sem_take(lcd_dma_int,RT_WAITING_FOREVER);
-        slcd_frame_show();
+        //slcd_frame_show();
+        screen_update();
         //rt_thread_delay(10);
         //rt_sem_release(lcd_dma_int);
     }

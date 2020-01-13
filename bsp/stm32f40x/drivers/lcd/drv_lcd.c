@@ -289,17 +289,17 @@ void LCD_FSMC_Config(void)
     GPIO_PinAFConfig(GPIOG,GPIO_PinSource2,GPIO_AF_FSMC); 
     GPIO_PinAFConfig(GPIOG,GPIO_PinSource12,GPIO_AF_FSMC);   
 
-    readWriteTiming.FSMC_AddressSetupTime = 2;   //地址建立时间（ADDSET） 16个HCLK 1/168M=6ns*16=96ns  
-    readWriteTiming.FSMC_AddressHoldTime = 0x00;   //地址保持时间（ADDHLD）
-    readWriteTiming.FSMC_DataSetupTime = 0xb;           //数据保存时间 60个HCLK = 6*60=360ns
+    readWriteTiming.FSMC_AddressSetupTime = 9;   //地址建立时间（ADDSET） 16个HCLK 1/168M=6ns*16=96ns  
+    readWriteTiming.FSMC_AddressHoldTime = 0x05;   //地址保持时间（ADDHLD）
+    readWriteTiming.FSMC_DataSetupTime = 0xf;           //数据保存时间 60个HCLK = 6*60=360ns
     readWriteTiming.FSMC_BusTurnAroundDuration = 0x00;
     readWriteTiming.FSMC_CLKDivision = 0x00;
     readWriteTiming.FSMC_DataLatency = 0x00;
     readWriteTiming.FSMC_AccessMode = FSMC_AccessMode_A;   
     
-    writeTiming.FSMC_AddressSetupTime =2;        //地址建立时间（ADDSET）9个HCLK =54ns 
-    writeTiming.FSMC_AddressHoldTime = 0x00;   //地址保持时间 
-    writeTiming.FSMC_DataSetupTime = 0xb;            //数据保存时间 6ns*9个HCLK=54ns
+    writeTiming.FSMC_AddressSetupTime =9;        //地址建立时间（ADDSET）9个HCLK =54ns 
+    writeTiming.FSMC_AddressHoldTime = 0x5;   //地址保持时间 
+    writeTiming.FSMC_DataSetupTime = 0xf;            //数据保存时间 6ns*9个HCLK=54ns
     writeTiming.FSMC_BusTurnAroundDuration = 0x00;
     writeTiming.FSMC_CLKDivision = 0x00;
     writeTiming.FSMC_DataLatency = 0x00;

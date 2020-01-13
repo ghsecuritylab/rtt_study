@@ -5,6 +5,8 @@
 #include "malloc.h"
 #include "bmp.h"
 #include "sram_variable.h"
+#include <dfs.h>
+#include <dfs_posix.h>
 
 //////////////////////////////////////////////////////////////////////////////////	 
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途

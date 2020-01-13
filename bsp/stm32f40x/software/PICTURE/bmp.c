@@ -76,7 +76,7 @@ u8 stdbmp_decode(const u8 *filename)
 		biCompression=pbmp->bmiHeader.biCompression;//压缩方式
 		picinfo.ImgHeight=pbmp->bmiHeader.biHeight;	//得到图片高度
 		picinfo.ImgWidth=pbmp->bmiHeader.biWidth;  	//得到图片宽度 
-		print_bmp_info();
+		//print_bmp_info(pbmp);
 		ai_draw_init();//初始化智能画图			
 		//水平像素必须是4的倍数!!
 		if((picinfo.ImgWidth*color_byte)%4)
