@@ -72,6 +72,7 @@ void gui_init(void)
     }
     /* set graphic device */
     err = rtgui_set_device(device);
+    piclib_init();
     rt_kprintf("gui_init :%d\n",err);
 }
 INIT_APP_EXPORT(gui_init);
@@ -288,10 +289,13 @@ u8 ai_load_picfile(const u8 *filename,u16 x,u16 y,u16 width,u16 height,u8 fast)
 {	
 	u8	res;//返回值
 	u8 temp;	
-	if((x+width)>picinfo.lcdwidth)return PIC_WINDOW_ERR;		//x坐标超范围了.
-	if((y+height)>picinfo.lcdheight)return PIC_WINDOW_ERR;		//y坐标超范围了.  
+	if((x+width)>picinfo.lcdwidth)
+	    return PIC_WINDOW_ERR;		//x坐标超范围了.
+	if((y+height)>picinfo.lcdheight)
+	    return PIC_WINDOW_ERR;		//y坐标超范围了.  
 	//得到显示方框大小	  	 
-	if(width==0||height==0)return PIC_WINDOW_ERR;	//窗口设定错误
+	if(width==0||height==0)
+	    return PIC_WINDOW_ERR;	//窗口设定错误
 	picinfo.S_Height=height;
 	picinfo.S_Width=width;
 	//显示区域无效
@@ -301,7 +305,8 @@ u8 ai_load_picfile(const u8 *filename,u16 x,u16 y,u16 width,u16 height,u8 fast)
 		picinfo.S_Width=_current_driver->width;
 		return FALSE;   
 	}
-	if(pic_phy.fillcolor==NULL)fast=0;//颜色填充函数未实现,不能快速显示
+	if(pic_phy.fillcolor==NULL)
+	    fast=0;//颜色填充函数未实现,不能快速显示
 	//显示的开始坐标点
 	picinfo.S_YOFF=y;
 	picinfo.S_XOFF=x;
@@ -322,7 +327,8 @@ u8 ai_load_picfile(const u8 *filename,u16 x,u16 y,u16 width,u16 height,u8 fast)
 		default:
 	 		res=PIC_FORMAT_ERR;  						//非图片格式!!!  
 			break;
-	}  											   
+	}  
+	screen_update();
 	return res;
 }
 //动态分配内存
@@ -335,6 +341,35 @@ void pic_memfree (void* mf)
 {
 	myfree(1,mf);
 }
+int pic_auto_play(char * file_dir_name)
+{
+    char temp_file_name[60];
+    static  DIR * dir = NULL;
+    struct dirent * file_info = NULL;
+    if(!dir)
+    {
+        dir = opendir(file_dir_name);
+        if(!dir)
+        {
+            rt_kprintf("%s is empty\n",file_dir_name);
+            return -1;
+        }
+    }
+    file_info = readdir(dir);
+    if(!file_info)
+    {
+        rt_kprintf("seekdir\n");
+        seekdir(dir,SEEK_SET);
+        file_info = readdir(dir);
+    }
+    rt_memset(temp_file_name,0,60);
+    rt_strncpy(temp_file_name,file_dir_name,rt_strlen(file_dir_name));
+    rt_strncpy(temp_file_name+rt_strlen(temp_file_name),file_info->d_name,rt_strlen(file_info->d_name));
+    rt_kprintf("当前图片为=%s\n",temp_file_name);
+    ai_load_picfile(temp_file_name,0,0,_current_driver->width,_current_driver->height,0);
+    return 0;
+}
+
 
 
 

@@ -63,6 +63,20 @@
 #define _UI_BITBYTES(bits)      ((bits + 7)/8)
 #define _UI_ABS(x)              ((x)>=0? (x):-(x))
 
+#define RTGUI_RGB_B(c)  ((c) & 0xff)
+#define RTGUI_RGB_G(c)  (((c) >> 8)  & 0xff)
+#define RTGUI_RGB_R(c)  (((c) >> 16) & 0xff)
+#define RTGUI_RGB_A(c)  (((c) >> 24) & 0xff)
+/* convert rtgui color to RRRRRGGGGGGBBBBB */
+rt_inline rt_uint16_t color_to_565(u32 c)
+{
+    rt_uint16_t pixel;
+
+    pixel = (rt_uint16_t)(((RTGUI_RGB_R(c) >> 3) << 11) | ((RTGUI_RGB_G(c) >> 2) << 5) | (RTGUI_RGB_B(c) >> 3));
+
+    return pixel;
+}
+
 
 //图片显示物理层接口  
 //在移植的时候,必须由用户自己实现这几个函数

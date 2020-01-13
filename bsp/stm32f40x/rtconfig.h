@@ -184,26 +184,8 @@
 
 /* system packages */
 
-#define PKG_USING_GUIENGINE
-#define PKG_USING_GUIENGINE_LATEST_VERSION
-#define PKG_USING_RGB888_PIXEL_BITS_24
-#define PKG_USING_RGB888_PIXEL_BITS 24
-#define GUIENGINE_NAME_MAX 16
-#define GUIENG_USING_FNT_FILE
-#define GUIENGINE_USING_FONT16
-#define GUIENGINE_USING_FONT12
-#define GUIENGINE_USING_FONTHZ
-#define GUIENGINE_USING_HZ_FILE
-#define GUIENGINE_IMAGE_XPM
-#define GUIENGINE_USING_JPG
-#define GUIENGINE_IMAGE_TJPGD
-#define GUIENGINE_IMAGE_BMP
-#define GUIENGINE_IMAGE_CONTAINER
-#define GUIENGINE_USING_DEMO
 
 /* peripheral libraries and drivers */
-
-/* sensors drivers */
 
 
 /* miscellaneous packages */

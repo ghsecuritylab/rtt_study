@@ -55,7 +55,7 @@
           <CreateHexFile>1</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>0</BrowseInformation>
-          <ListingPath>.\</ListingPath>
+          <ListingPath>.\build\</ListingPath>
           <HexFormatSelection>1</HexFormatSelection>
           <Merge32K>0</Merge32K>
           <CreateBatchFile>0</CreateBatchFile>
@@ -159,7 +159,7 @@
             <ldmm>1</ldmm>
             <ldXref>1</ldXref>
             <BigEnd>0</BigEnd>
-            <AdsALst>0</AdsALst>
+            <AdsALst>1</AdsALst>
             <AdsACrf>1</AdsACrf>
             <AdsANop>0</AdsANop>
             <AdsANot>0</AdsANot>
@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>RT_USING_ARM_LIBC, USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>.;..\..\include;applications;.;drivers;drivers\rtc;drivers\lcd;drivers\sram;drivers\touch;drivers\vs1003;drivers\eth;..\..\components\drivers\include\drivers;drivers\usbdevice\inc;Libraries\STM32F4xx_StdPeriph_Driver\inc;Libraries\CMSIS\ST\STM32F4xx\Include;Libraries\CMSIS\Include;packages\CmBacktrace-latest;packages\gui_engine-latest\include;packages\gui_engine-latest\libraries\tjpgd1a;packages\gui_engine-latest\example;..\..\libcpu\arm\common;..\..\libcpu\arm\cortex-m4;..\..\components\dfs\include;..\..\components\dfs\filesystems\devfs;..\..\components\dfs\filesystems\elmfat;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\drivers\spi;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\finsh;..\..\components\libc\compilers\armlibc;..\..\components\libc\compilers\common;..\..\components\net\sal_socket\include;..\..\components\net\sal_socket\include\socket;..\..\components\net\sal_socket\include\dfs_net;..\..\components\net\sal_socket\include\dfs_net\sys_select;..\..\components\net\sal_socket\include\socket\sys_socket;..\..\components\utilities\ymodem;.\software\PICTURE</IncludePath>
+              <IncludePath>.;..\..\include;applications;.;drivers;drivers\rtc;drivers\lcd;drivers\sram;drivers\touch;drivers\vs1003;drivers\eth;..\..\components\drivers\include\drivers;drivers\usbdevice\inc;Libraries\STM32F4xx_StdPeriph_Driver\inc;Libraries\CMSIS\ST\STM32F4xx\Include;Libraries\CMSIS\Include;packages\CmBacktrace-latest;..\..\libcpu\arm\common;..\..\libcpu\arm\cortex-m4;..\..\components\dfs\include;..\..\components\dfs\filesystems\devfs;..\..\components\dfs\filesystems\elmfat;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\drivers\spi;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\finsh;..\..\components\libc\compilers\armlibc;..\..\components\libc\compilers\common;..\..\components\net\sal_socket\include;..\..\components\net\sal_socket\include\socket;..\..\components\net\sal_socket\include\dfs_net;..\..\components\net\sal_socket\include\dfs_net\sys_select;..\..\components\net\sal_socket\include\socket\sys_socket;..\..\components\utilities\ymodem</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -566,6 +566,11 @@
               <FileName>w25qxx.c</FileName>
               <FileType>1</FileType>
               <FilePath>drivers\w25qxx.c</FilePath>
+            </File>
+            <File>
+              <FileName>malloc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\drivers\malloc.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -850,246 +855,6 @@
               <FileName>cmb_port.c</FileName>
               <FileType>1</FileType>
               <FilePath>packages\CmBacktrace-latest\cmb_port.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>GuiEngine</GroupName>
-          <Files>
-            <File>
-              <FileName>asc12font.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\asc12font.c</FilePath>
-            </File>
-            <File>
-              <FileName>asc16font.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\asc16font.c</FilePath>
-            </File>
-            <File>
-              <FileName>blit.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\blit.c</FilePath>
-            </File>
-            <File>
-              <FileName>box.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\box.c</FilePath>
-            </File>
-            <File>
-              <FileName>color.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\color.c</FilePath>
-            </File>
-            <File>
-              <FileName>container.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\container.c</FilePath>
-            </File>
-            <File>
-              <FileName>dc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\dc.c</FilePath>
-            </File>
-            <File>
-              <FileName>dc_blend.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\dc_blend.c</FilePath>
-            </File>
-            <File>
-              <FileName>dc_buffer.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\dc_buffer.c</FilePath>
-            </File>
-            <File>
-              <FileName>dc_client.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\dc_client.c</FilePath>
-            </File>
-            <File>
-              <FileName>dc_hw.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\dc_hw.c</FilePath>
-            </File>
-            <File>
-              <FileName>dc_rotozoom.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\dc_rotozoom.c</FilePath>
-            </File>
-            <File>
-              <FileName>dc_trans.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\dc_trans.c</FilePath>
-            </File>
-            <File>
-              <FileName>filerw.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\filerw.c</FilePath>
-            </File>
-            <File>
-              <FileName>font.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\font.c</FilePath>
-            </File>
-            <File>
-              <FileName>font_bmp.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\font_bmp.c</FilePath>
-            </File>
-            <File>
-              <FileName>font_fnt.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\font_fnt.c</FilePath>
-            </File>
-            <File>
-              <FileName>font_freetype.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\font_freetype.c</FilePath>
-            </File>
-            <File>
-              <FileName>font_hz_bmp.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\font_hz_bmp.c</FilePath>
-            </File>
-            <File>
-              <FileName>font_hz_file.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\font_hz_file.c</FilePath>
-            </File>
-            <File>
-              <FileName>gb2312.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\gb2312.c</FilePath>
-            </File>
-            <File>
-              <FileName>hz12font.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\hz12font.c</FilePath>
-            </File>
-            <File>
-              <FileName>hz16font.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\hz16font.c</FilePath>
-            </File>
-            <File>
-              <FileName>image.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\image.c</FilePath>
-            </File>
-            <File>
-              <FileName>image_bmp.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\image_bmp.c</FilePath>
-            </File>
-            <File>
-              <FileName>image_container.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\image_container.c</FilePath>
-            </File>
-            <File>
-              <FileName>image_hdc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\image_hdc.c</FilePath>
-            </File>
-            <File>
-              <FileName>image_jpg.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\image_jpg.c</FilePath>
-            </File>
-            <File>
-              <FileName>image_png.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\image_png.c</FilePath>
-            </File>
-            <File>
-              <FileName>image_xpm.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\image_xpm.c</FilePath>
-            </File>
-            <File>
-              <FileName>matrix.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\matrix.c</FilePath>
-            </File>
-            <File>
-              <FileName>mouse.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\mouse.c</FilePath>
-            </File>
-            <File>
-              <FileName>region.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\region.c</FilePath>
-            </File>
-            <File>
-              <FileName>rtgui_app.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\rtgui_app.c</FilePath>
-            </File>
-            <File>
-              <FileName>rtgui_driver.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\rtgui_driver.c</FilePath>
-            </File>
-            <File>
-              <FileName>rtgui_object.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\rtgui_object.c</FilePath>
-            </File>
-            <File>
-              <FileName>rtgui_system.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\rtgui_system.c</FilePath>
-            </File>
-            <File>
-              <FileName>server.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\server.c</FilePath>
-            </File>
-            <File>
-              <FileName>title.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\title.c</FilePath>
-            </File>
-            <File>
-              <FileName>topwin.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\topwin.c</FilePath>
-            </File>
-            <File>
-              <FileName>widget.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\widget.c</FilePath>
-            </File>
-            <File>
-              <FileName>window.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\src\window.c</FilePath>
-            </File>
-            <File>
-              <FileName>tjpgd.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\libraries\tjpgd1a\tjpgd.c</FilePath>
-            </File>
-            <File>
-              <FileName>malloc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\drivers\malloc.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>gui_demo</GroupName>
-          <Files>
-            <File>
-              <FileName>gui_demo.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\example\gui_demo.c</FilePath>
-            </File>
-            <File>
-              <FileName>resources.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>packages\gui_engine-latest\example\resources.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1484,21 +1249,6 @@
               <FileName>ymodem.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\components\utilities\ymodem\ymodem.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>New Group</GroupName>
-          <Files>
-            <File>
-              <FileName>bmp.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\software\PICTURE\bmp.c</FilePath>
-            </File>
-            <File>
-              <FileName>piclib.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\software\PICTURE\piclib.c</FilePath>
             </File>
           </Files>
         </Group>

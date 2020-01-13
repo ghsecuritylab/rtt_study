@@ -23,6 +23,17 @@
 //filename:包含路径的文件名	       	  			  
 //返回值:0,成功;
 //		 其他,错误码.
+void print_bmp_info(BITMAPINFO *pbmp)
+{
+    rt_kprintf("pbmp->bmfHeader.bfOffBits :%d\n",pbmp->bmfHeader.bfOffBits);
+    rt_kprintf("pbmp->bmiHeader.biBitCount/8 :%d\n",pbmp->bmiHeader.biBitCount/8);
+    rt_kprintf("pbmp->bmiHeader.biCompression :%d\n",pbmp->bmiHeader.biCompression);
+    rt_kprintf("pbmp->bmiHeader.biHeight :%d\n",pbmp->bmiHeader.biHeight);
+    rt_kprintf("pbmp->bmiHeader.biWidth :%d\n",pbmp->bmiHeader.biWidth);
+    
+}
+
+
 u8 stdbmp_decode(const u8 *filename) 
 {
     u16 br;
@@ -65,12 +76,13 @@ u8 stdbmp_decode(const u8 *filename)
 		biCompression=pbmp->bmiHeader.biCompression;//压缩方式
 		picinfo.ImgHeight=pbmp->bmiHeader.biHeight;	//得到图片高度
 		picinfo.ImgWidth=pbmp->bmiHeader.biWidth;  	//得到图片宽度 
+		print_bmp_info();
 		ai_draw_init();//初始化智能画图			
 		//水平像素必须是4的倍数!!
 		if((picinfo.ImgWidth*color_byte)%4)
 		    rowlen=((picinfo.ImgWidth*color_byte)/4+1)*4;
 		else 
-		    rowlen=picinfo.ImgWidth*color_byte;
+		    rowlen=picinfo.ImgWidth*color_byte;//行的字节长度
 		//开始解码BMP   
 		color=0;//颜色清空	 													 
 		x=0 ;
