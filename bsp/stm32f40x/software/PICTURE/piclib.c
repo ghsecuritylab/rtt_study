@@ -333,7 +333,7 @@ u8 ai_load_picfile(const u8 *filename,u16 x,u16 y,u16 width,u16 height,u8 fast)
 			break;
 	}  
 	tick_end = rt_tick_get();
-	//rt_kprintf("tick1:%d\n",tick_end-tick);
+	rt_kprintf("tick1:%d\n",tick_end-tick);
 	return res;
 }
 //¶¯Ì¬·ÖÅäÄÚ´æ

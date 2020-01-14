@@ -34,22 +34,26 @@ u8 gifdecoding=0;//标记GIF正在解码.
 #if GIF_USE_MALLOC==0 	
 gif89a tgif89a;			//gif89a文件
 FIL f_gfile;			//gif 文件
+s32 fd_;
 LZW_INFO tlzw;			//lzw
 #endif
 
 //检测GIF头
 //返回值:0,是GIF89a/87a;非零,非GIF89a/87a
-u8 gif_check_head(FIL *file)
+u8 gif_check_head(s32 fd)
 {
 	u8 gifversion[6];
 	u32 readed;
 	u8 res;
-	res=f_read(file,gifversion,6,(UINT*)&readed);
-	if(res)return 1;	   
+	readed=read(fd,gifversion,6);
+	if(readed != 6)
+	    return 1;	   
 	if((gifversion[0]!='G')||(gifversion[1]!='I')||(gifversion[2]!='F')||
 	(gifversion[3]!='8')||((gifversion[4]!='7')&&(gifversion[4]!='9'))||
-	(gifversion[5]!='a'))return 2;
-	else return 0;	
+	(gifversion[5]!='a'))
+	    return 2;
+	else 
+	    return 0;	
 }
 //将RGB888转为RGB565
 //ctb:RGB888颜色数组首地址.

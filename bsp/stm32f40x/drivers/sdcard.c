@@ -1645,7 +1645,7 @@ void SD_DMA_Config(u32*mbuf,u32 bufsize,u32 dir)
   DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_INC4;//存储器突发4次传输
   DMA_Init(DMA2_Stream3, &DMA_InitStructure);//初始化DMA Stream
 
-	DMA_FlowControllerConfig(DMA2_Stream3,DMA_FlowCtrl_Peripheral);//外设流控制 
+  DMA_FlowControllerConfig(DMA2_Stream3,DMA_FlowCtrl_Peripheral);//外设流控制 
 	 
   DMA_Cmd(DMA2_Stream3 ,ENABLE);//开启DMA传输	 
 
@@ -1673,8 +1673,10 @@ u8 SD_ReadDisk(u8*buf,u32 sector,u8 cnt)
 		} 
 	}else
 	{
-		if(cnt==1)sta=SD_ReadBlock(buf,lsector,512);    	//单个sector的读操作
-		else sta=SD_ReadMultiBlocks(buf,lsector,512,cnt);//多个sector  
+		if(cnt==1)
+		    sta=SD_ReadBlock(buf,lsector,512);    	//单个sector的读操作
+		else
+		    sta=SD_ReadMultiBlocks(buf,lsector,512,cnt);//多个sector  
 	}
 	//rt_kprintf("sector %d,cnt =%d,ret =%d\r\n",sector,cnt,sta);
 	return sta;
@@ -1700,8 +1702,10 @@ u8 SD_WriteDisk(u8*buf,u32 sector,u8 cnt)
 		} 
 	}else
 	{
-		if(cnt==1)sta=SD_WriteBlock(buf,lsector,512);    	//单个sector的写操作
-		else sta=SD_WriteMultiBlocks(buf,lsector,512,cnt);	//多个sector  
+		if(cnt==1)
+		    sta=SD_WriteBlock(buf,lsector,512);    	//单个sector的写操作
+		else 
+		    sta=SD_WriteMultiBlocks(buf,lsector,512,cnt);	//多个sector  
 	}
 	return sta;
 }
@@ -1795,40 +1799,6 @@ static rt_size_t rt_sdcard_write (rt_device_t dev, rt_off_t pos, const void* buf
     else factor = SECTOR_SIZE;
 
     rt_sem_take(&sd_lock, RT_WAITING_FOREVER);
-
-    /* read all sectors */
-    #if 0
-    if (((rt_uint32_t)buffer % 4 != 0) ||
-            ((rt_uint32_t)buffer > 0x20080000))
-    {
-        rt_uint32_t index;
-
-        /* which is not alignment with 4 or not chip SRAM */
-        for (index = 0; index < size; index ++)
-        {
-            /* copy to the buffer */
-            rt_memcpy(_sdcard_buffer, ((rt_uint8_t*)buffer + index * SECTOR_SIZE), SECTOR_SIZE);
-
-            status = SD_WriteBlock(_sdcard_buffer,
-                                   (part.offset + index + pos) * factor, SECTOR_SIZE);
-
-            if (status != SD_OK) break;
-        }
-    }
-    else
-    {
-        if (size == 1)
-        {
-            status = SD_WriteBlock((u8 *)buffer,
-                                   (part.offset + pos) * factor, SECTOR_SIZE);
-        }
-        else
-        {
-            status = SD_WriteMultiBlocks( (u8 *)buffer,
-                                         (part.offset + pos) * factor, SECTOR_SIZE, size);
-        }
-    }
-    #endif
     status = SD_WriteDisk((u8 *)buffer,(part.offset + pos) * factor,size);
     rt_sem_release(&sd_lock);
 

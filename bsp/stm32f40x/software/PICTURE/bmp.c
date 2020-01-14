@@ -32,7 +32,147 @@ void print_bmp_info(BITMAPINFO *pbmp)
     rt_kprintf("pbmp->bmiHeader.biWidth :%d\n",pbmp->bmiHeader.biWidth);
     
 }
+//将RGB888转为RGB565
+//ctb:RGB888颜色数组首地址.
+//返回值:RGB565颜色.
 
+u16 bmp_getrgb565(u8 *ctb) 
+{
+	u16 r,g,b;
+	r=(ctb[0]>>3)&0X1F;
+	g=(ctb[1]>>2)&0X3F;
+	b=(ctb[2]>>3)&0X1F;
+	return b+(g<<5)+(r<<11);
+}
+
+static u8 us_sram = 1;//1使用外部sram可以整个文件一起读，0使用内部ram，分步读取数据
+u8 stdbmp_24_decode(const u8 *filename) //bmp24解码
+{
+    u16 br;
+    u32 count;		    	   
+	u8  color_byte;
+	u16 x ,y,color;	  
+	u16 countpix=0;//记录像素 	 
+	s32 fd;
+	u8 *databuf;    		//数据读取存放地址
+ 	u32 readlen=BMP_DBUF_SIZE;//一次从SD卡读取的字节数长度
+
+	u8 *bmpbuf;			  	//数据解码地址
+	u8 biCompression=0;		//记录压缩方式
+	
+	u16 rowlen;	  		 	//水平方向字节数  
+	BITMAPINFO *pbmp;		//临时指针
+
+	u32 bmp_file_len = 0;
+	u8  *pic_ptr = NULL;
+	fd = open((const u8*)filename,O_RDONLY);//打开文件	 	
+	if(fd < 0)
+	{
+	    rt_kprintf("bmp file open fail\n");
+	    return 0;
+	}
+    bmp_file_len = lseek(fd, 0, SEEK_END);
+    rt_kprintf("bmp file len:%d\n",bmp_file_len);
+    if(us_sram)
+    {
+        readlen = bmp_file_len;
+        pic_ptr=(u8*)pic_memalloc(readlen+4);		//开辟外部sram
+    }
+    else
+    {
+        readlen = BMP_DBUF_SIZE;
+        pic_ptr=(u8*)rt_malloc(readlen+4);		//开辟内部ram
+    }
+    if(!pic_ptr)
+    {
+        rt_kprintf("malloc fail us_sram=%d\n",us_sram);
+        close(fd);
+        return 0;
+    }
+    if((u32)pic_ptr%4)
+    {
+        databuf = pic_ptr + (4-((u32)pic_ptr%4));
+    }
+    else
+    {
+        databuf = pic_ptr;
+    }
+    rt_kprintf("malloc ptr%08x,data_buff:%08x\n",pic_ptr,databuf);
+	if(fd >= 0)//打开成功.
+	{ 
+	    u32 tick,tick_end;
+		br = read(fd,databuf,readlen);	//读出readlen个字节  
+		pbmp=(BITMAPINFO*)databuf;					//得到BMP的头部信息   
+		count=pbmp->bmfHeader.bfOffBits;        	//数据偏移,得到数据段的开始地址
+		color_byte=pbmp->bmiHeader.biBitCount/8;	//彩色位 16/24/32  
+		biCompression=pbmp->bmiHeader.biCompression;//压缩方式
+		picinfo.ImgHeight=pbmp->bmiHeader.biHeight;	//得到图片高度
+		picinfo.ImgWidth=pbmp->bmiHeader.biWidth;  	//得到图片宽度 
+		//print_bmp_info(pbmp);
+		ai_draw_init();//初始化智能画图			
+		//水平像素必须是4的倍数!!
+		if((picinfo.ImgWidth*color_byte)%4)
+		    rowlen=((picinfo.ImgWidth*color_byte)/4+1)*4;
+		else 
+		    rowlen=picinfo.ImgWidth*color_byte;//行的字节长度												 
+		x=0 ;
+		y=picinfo.ImgHeight;
+		bmpbuf=databuf;
+		while(1)
+		{				 
+			while(count<readlen)  //读取一簇1024扇区 (SectorsPerClust 每簇扇区数)
+		    {
+		        //u32 *color888 = (u32 *)&bmpbuf[count];
+				if(color_byte==3)   //24位颜色图
+				{
+				    //color = color_to_565(*color888);
+				    color = bmp_getrgb565(&bmpbuf[count]);
+				}  
+				else
+				{
+				    rt_kprintf("bmp unsurport \n");
+				    return 0;
+				}
+				count += 3;		  
+				if(x<picinfo.ImgWidth)	 					 			   
+				{						 				 	  	       
+					pic_phy.draw_point(x+picinfo.S_XOFF,y+picinfo.S_YOFF-1,color);//显示图片										    
+				}
+				if(countpix>=rowlen)//水平方向像素值到了.换行
+				{		 
+					y--; //图片数据是倒着组织的
+					if(y==0)
+					    break;			 
+					x=0; 
+					countpix=0;
+				}	 
+				x++;//x轴增加一个像素 	  
+				countpix++;//像素累加
+			} 
+			if(us_sram)
+			{
+			    break;
+			}
+			br = read(fd,databuf,readlen);//读出readlen个字节
+			if(br!=readlen)
+			    readlen=br;	//最后一批数据		  
+			if(br==0)
+			    break;		//读取出错
+			bmpbuf=databuf;
+	 	 	count=0;
+		}  
+	}  	
+	if(us_sram)
+    {
+        pic_memfree(pic_ptr);
+    }
+    else
+    {
+        rt_free(pic_ptr);
+    }  
+    close(fd);//关闭文件
+	return 0;		//BMP显示结束.    					   
+}	
 
 u8 stdbmp_decode(const u8 *filename) 
 {

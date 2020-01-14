@@ -93,7 +93,7 @@ __packed typedef struct
 
 extern u8 gifdecoding;	//GIF正在解码标记.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-u8 gif_check_head(FIL *file);														    //检测GIF头
+u8 gif_check_head(s32 fd);														    //检测GIF头
 u16 gif_getrgb565(u8 *ctb);																//将RGB888转为RGB565
 u8 gif_readcolortbl(FIL *file,gif89a * gif,u16 num);									//读取颜色表
 u8 gif_getinfo(FIL *file,gif89a * gif);												    //得到逻辑屏幕描述,图像尺寸等
