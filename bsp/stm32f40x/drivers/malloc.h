@@ -26,7 +26,7 @@
 #endif
 
 //定义三个内存池
-#define SRAMIN	 0		//内部内存池
+#define SRAMIN	 1		//内部内存池
 #define SRAMEX   1		//外部内存池
 #define SRAMCCM  2		//CCM内存池(此部分SRAM仅仅CPU可以访问!!!)
 

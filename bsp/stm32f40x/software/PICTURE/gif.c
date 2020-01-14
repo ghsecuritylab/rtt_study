@@ -539,8 +539,10 @@ u8 gif_decode(const u8 *filename,u16 x,u16 y,u16 width,u16 height)
 				    gif_recovergctbl(mygif89a);//恢复全局颜色表
 				if(mygif89a->delay)
 				    dtime=mygif89a->delay;
-				else dtime=10;//默认延时
-				while(dtime--&&gifdecoding)delay_ms(10);//延迟
+				else 
+				    dtime=10;//默认延时
+				while(dtime--&&gifdecoding)
+				    rt_thread_delay(10);//延迟
 				if(res==2)
 				{
 					res=0;

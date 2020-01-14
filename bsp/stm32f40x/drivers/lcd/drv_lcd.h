@@ -29,6 +29,7 @@ typedef struct
 	rt_uint16_t setxcmd;		//设置x坐标指令
 	rt_uint16_t setycmd;		//设置y坐标指令 
 } lcd_info_t;
+extern lcd_info_t lcddev;
 
 typedef struct
 {
@@ -42,6 +43,8 @@ typedef struct
 //LCD的画笔颜色和背景色	   
 extern u16  BRUSH_COLOR;//默认红色    
 extern u16  BACK_COLOR; //背景颜色.默认为白色
+#define POINT_COLOR 0x001F
+#define BACK_COLOR  0
 
 #define LCD_HIGH 320//屏高度
 #define LCD_WIDTH 480//屏宽度

@@ -1,10 +1,6 @@
-#include "fontupd.h"
-#include "ff.h"	  
-#include "w25qxx.h"   
-#include "lcd.h"  
+#include "fontupd.h"   
 #include "string.h"
 #include "malloc.h"
-#include "delay.h"
 #include "usart.h"
 //////////////////////////////////////////////////////////////////////////////////	 
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
@@ -65,58 +61,60 @@ u32 fupd_prog(u16 x,u16 y,u8 size,u32 fsize,u32 pos)
 u8 updata_fontx(u16 x,u16 y,u8 size,u8 *fxpath,u8 fx)
 {
 	u32 flashaddr=0;								    
-	FIL * fftemp;
+	s32 fd;
 	u8 *tempbuf;
  	u8 res;	
 	u16 bread;
 	u32 offx=0;
 	u8 rval=0;	     
-	fftemp=(FIL*)mymalloc(SRAMIN,sizeof(FIL));	//分配内存	
-	if(fftemp==NULL)rval=1;
+
 	tempbuf=mymalloc(SRAMIN,4096);				//分配4096个字节空间
 	if(tempbuf==NULL)rval=1;
- 	res=f_open(fftemp,(const TCHAR*)fxpath,FA_READ); 
- 	if(res)rval=2;//打开文件失败  
+ 	fd = open(fxpath,O_RDONLY); 
+ 	if(fd<0)
+ 	    rval=2;//打开文件失败  
  	if(rval==0)	 
 	{
+	    u32 file_len;
+	    file_len = lseek(fd,0,SEEK_END);
+	    lseek(fd,0,SEEK_SET);
 		switch(fx)
 		{
 			case 0:												//更新UNIGBK.BIN
 				ftinfo.ugbkaddr=FONTINFOADDR+sizeof(ftinfo);	//信息头之后，紧跟UNIGBK转换码表
-				ftinfo.ugbksize=fftemp->fsize;					//UNIGBK大小
+				ftinfo.ugbksize=file_len;					//UNIGBK大小
 				flashaddr=ftinfo.ugbkaddr;
 				break;
 			case 1:
 				ftinfo.f12addr=ftinfo.ugbkaddr+ftinfo.ugbksize;	//UNIGBK之后，紧跟GBK12字库
-				ftinfo.gbk12size=fftemp->fsize;					//GBK12字库大小
+				ftinfo.gbk12size=file_len;					//GBK12字库大小
 				flashaddr=ftinfo.f12addr;						//GBK12的起始地址
 				break;
 			case 2:
 				ftinfo.f16addr=ftinfo.f12addr+ftinfo.gbk12size;	//GBK12之后，紧跟GBK16字库
-				ftinfo.gbk16size=fftemp->fsize;					//GBK16字库大小
+				ftinfo.gbk16size=file_len;					//GBK16字库大小
 				flashaddr=ftinfo.f16addr;						//GBK16的起始地址
 				break;
 			case 3:
 				ftinfo.f24addr=ftinfo.f16addr+ftinfo.gbk16size;	//GBK16之后，紧跟GBK24字库
-				ftinfo.gkb24size=fftemp->fsize;					//GBK24字库大小
+				ftinfo.gkb24size=file_len;					//GBK24字库大小
 				flashaddr=ftinfo.f24addr;						//GBK24的起始地址
 				break;
 		} 
 			
-		while(res==FR_OK)//死循环执行
+		while(1)//死循环执行
 		{
-	 		res=f_read(fftemp,tempbuf,4096,(UINT *)&bread);		//读取数据	 
-			if(res!=FR_OK)break;								//执行错误
+	 		bread = read(fd,tempbuf,4096);		//读取数据	 
 			W25QXX_Write(tempbuf,offx+flashaddr,4096);		//从0开始写入4096个数据  
 	  		offx+=bread;	  
-			fupd_prog(x,y,size,fftemp->fsize,offx);	 			//进度显示
-			if(bread!=4096)break;								//读完了.
+			fupd_prog(x,y,size,file_len,offx);	 			//进度显示
+			if(bread!=4096)
+			    break;								//读完了.
 	 	} 	
-		f_close(fftemp);		
+		close(fd);		
 	}			 
-	myfree(SRAMIN,fftemp);	//释放内存
 	myfree(SRAMIN,tempbuf);	//释放内存
-	return res;
+	return 0;
 }
 
 //更新字体文件,UNIGBK,GBK12,GBK16,GBK24一起更新
@@ -132,17 +130,16 @@ u8 update_font(u16 x,u16 y,u8 size,u8* src)
 	u32 *buf;
 	u8 res=0;		   
  	u16 i,j;
-	FIL *fftemp;
+	//FIL *fftemp;
+	s32 fd;
 	u8 rval=0;
 	
 	res=0XFF;		
 	ftinfo.fontok=0XFF;
 	pname=mymalloc(SRAMIN,100);	//申请100字节内存  
 	buf=mymalloc(SRAMIN,4096);	//申请4K字节内存  
-	fftemp=(FIL*)mymalloc(SRAMIN,sizeof(FIL));	//分配内存	
-	if(buf==NULL||pname==NULL||fftemp==NULL)
+	if(buf==NULL||pname==NULL)
 	{
-		myfree(SRAMIN,fftemp);
 		myfree(SRAMIN,pname);
 		myfree(SRAMIN,buf);
 		return 5;	//内存申请失败
@@ -150,21 +147,22 @@ u8 update_font(u16 x,u16 y,u8 size,u8* src)
 	//先查找文件是否正常 
 	strcpy((char*)pname,(char*)src);	//copy src内容到pname
 	strcat((char*)pname,(char*)UNIGBK_PATH); 
- 	res=f_open(fftemp,(const TCHAR*)pname,FA_READ); 
- 	if(res)rval|=1<<4;//打开文件失败  
+ 	fd = open(pname,O_RDONLY); 
+ 	if(fd<0)
+ 	    rval|=1<<4;//打开文件失败  
 	strcpy((char*)pname,(char*)src);	//copy src内容到pname
 	strcat((char*)pname,(char*)GBK12_PATH); 
- 	res=f_open(fftemp,(const TCHAR*)pname,FA_READ); 
- 	if(res)rval|=1<<5;//打开文件失败  
+ 	fd = open(pname,O_RDONLY); 
+ 	if(fd<0)rval|=1<<5;//打开文件失败  
 	strcpy((char*)pname,(char*)src);	//copy src内容到pname
 	strcat((char*)pname,(char*)GBK16_PATH); 
- 	res=f_open(fftemp,(const TCHAR*)pname,FA_READ); 
- 	if(res)rval|=1<<6;//打开文件失败  
+ 	fd = open(pname,O_RDONLY);
+ 	if(fd<0)rval|=1<<6;//打开文件失败  
 	strcpy((char*)pname,(char*)src);	//copy src内容到pname
 	strcat((char*)pname,(char*)GBK24_PATH); 
- 	res=f_open(fftemp,(const TCHAR*)pname,FA_READ); 
- 	if(res)rval|=1<<7;//打开文件失败   
-	myfree(SRAMIN,fftemp);//释放内存
+ 	fd = open(pname,O_RDONLY);  
+ 	if(fd<0)rval|=1<<7;//打开文件失败   
+
 	if(rval==0)//字库文件都存在.
 	{  
 		LCD_ShowString(x,y,240,320,size,"Erasing sectors... ");//提示正在擦除扇区	

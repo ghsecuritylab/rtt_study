@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>RT_USING_ARM_LIBC, USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>.;..\..\include;applications;.;drivers;drivers\rtc;drivers\lcd;drivers\sram;drivers\touch;drivers\vs1003;drivers\eth;..\..\components\drivers\include\drivers;drivers\usbdevice\inc;Libraries\STM32F4xx_StdPeriph_Driver\inc;Libraries\CMSIS\ST\STM32F4xx\Include;Libraries\CMSIS\Include;packages\CmBacktrace-latest;..\..\libcpu\arm\common;..\..\libcpu\arm\cortex-m4;..\..\components\dfs\include;..\..\components\dfs\filesystems\devfs;..\..\components\dfs\filesystems\elmfat;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\drivers\spi;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\finsh;..\..\components\libc\compilers\armlibc;..\..\components\libc\compilers\common;..\..\components\net\sal_socket\include;..\..\components\net\sal_socket\include\socket;..\..\components\net\sal_socket\include\dfs_net;..\..\components\net\sal_socket\include\dfs_net\sys_select;..\..\components\net\sal_socket\include\socket\sys_socket;..\..\components\utilities\ymodem;.\software\PICTURE;.\drivers\vs1003</IncludePath>
+              <IncludePath>.;..\..\include;applications;.;drivers;drivers\rtc;drivers\lcd;drivers\sram;drivers\touch;drivers\vs1003;drivers\eth;..\..\components\drivers\include\drivers;drivers\usbdevice\inc;Libraries\STM32F4xx_StdPeriph_Driver\inc;Libraries\CMSIS\ST\STM32F4xx\Include;Libraries\CMSIS\Include;packages\CmBacktrace-latest;..\..\libcpu\arm\common;..\..\libcpu\arm\cortex-m4;..\..\components\dfs\include;..\..\components\dfs\filesystems\devfs;..\..\components\dfs\filesystems\elmfat;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\drivers\spi;..\..\components\drivers\include;..\..\components\drivers\include;..\..\components\finsh;..\..\components\libc\compilers\armlibc;..\..\components\libc\compilers\common;..\..\components\net\sal_socket\include;..\..\components\net\sal_socket\include\socket;..\..\components\net\sal_socket\include\dfs_net;..\..\components\net\sal_socket\include\dfs_net\sys_select;..\..\components\net\sal_socket\include\socket\sys_socket;..\..\components\utilities\ymodem;.\software\PICTURE;.\drivers\vs1003;.\software\TEXT</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -596,6 +596,16 @@
               <FileName>gif.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\software\PICTURE\gif.c</FilePath>
+            </File>
+            <File>
+              <FileName>text.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\software\TEXT\text.c</FilePath>
+            </File>
+            <File>
+              <FileName>fontupd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\software\TEXT\fontupd.c</FilePath>
             </File>
           </Files>
         </Group>
