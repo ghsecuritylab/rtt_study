@@ -71,7 +71,7 @@ u16 gif_getrgb565(u8 *ctb)
 //gif:gif信息;
 //num:tbl大小.
 //返回值:0,OK;其他,失败;
-u8 gif_readcolortbl(FIL *file,gif89a * gif,u16 num)
+u8 gif_readcolortbl(s32 fd,gif89a * gif,u16 num)
 {
 	u8 rgb[3];
 	u16 t;
@@ -79,8 +79,9 @@ u8 gif_readcolortbl(FIL *file,gif89a * gif,u16 num)
 	u32 readed;
 	for(t=0;t<num;t++)
 	{
-		res=f_read(file,rgb,3,(UINT*)&readed);
-		if(res)return 1;//读错误
+		readed = read(fd,rgb,3);
+		if(readed != 3)
+		    return 1;//读错误
 		gif->colortbl[t]=gif_getrgb565(rgb);
 	}
 	return 0;
@@ -89,16 +90,17 @@ u8 gif_readcolortbl(FIL *file,gif89a * gif,u16 num)
 //file:文件;
 //gif:gif信息;
 //返回值:0,OK;其他,失败;
-u8 gif_getinfo(FIL *file,gif89a * gif)
+u8 gif_getinfo(s32 fd,gif89a * gif)
 {
 	u32 readed;	 
 	u8 res;   
-	res=f_read(file,(u8*)&gif->gifLSD,7,(UINT*)&readed);
-	if(res)return 1;
+	readed = read(fd,(u8*)&gif->gifLSD,7);
+	if(readed != 7)return 1;
 	if(gif->gifLSD.flag&0x80)//存在全局颜色表
 	{
 		gif->numcolors=2<<(gif->gifLSD.flag&0x07);//得到颜色表大小
-		if(gif_readcolortbl(file,gif,gif->numcolors))return 1;//读错误	
+		if(gif_readcolortbl(fd,gif,gif->numcolors))
+		    return 1;//读错误	
 	}	   
 	return 0;
 }
@@ -138,27 +140,28 @@ void gif_initlzw(gif89a* gif,u8 codesize)
 //gfile:gif文件;
 //buf:数据缓存区
 //maxnum:最大读写数据限制
-u16 gif_getdatablock(FIL *gfile,u8 *buf,u16 maxnum) 
+u16 gif_getdatablock(s32 fd,u8 *buf,u16 maxnum) 
 {
 	u8 cnt;
 	u32 readed;
 	u32 fpos;
-	f_read(gfile,&cnt,1,(UINT*)&readed);//得到LZW长度			 
+	read(fd,&cnt,1);//得到LZW长度			 
 	if(cnt) 
 	{
 		if (buf)//需要读取 
 		{
 			if(cnt>maxnum)
 			{
-				fpos=f_tell(gfile);
-				f_lseek(gfile,fpos+cnt);//跳过
+				lseek(fd,cnt,SEEK_CUR);
+				//lseek(fd,fpos+cnt);//跳过
 				return cnt;//直接不读
 			}
-			f_read(gfile,buf,cnt,(UINT*)&readed);//得到LZW长度	
+			readed = read(fd,buf,cnt);//得到LZW长度	
 		}else 	//直接跳过
 		{
-			fpos=f_tell(gfile);
-			f_lseek(gfile,fpos+cnt);//跳过
+			//fpos=lseek(fd,0,SEEK_CUR);
+			//f_lseek(gfile,fpos+cnt);//跳过
+			lseek(fd,cnt,SEEK_CUR);
 		}
 	}
 	return cnt;
@@ -169,26 +172,27 @@ u16 gif_getdatablock(FIL *gfile,u8 *buf,u16 maxnum)
 //If an unknown extension block occures, the routine failes.
 //返回值:0,成功;
 // 		 其他,失败
-u8 gif_readextension(FIL *gfile,gif89a* gif, int *pTransIndex,u8 *pDisposal)
+u8 gif_readextension(s32 fd,gif89a* gif, int *pTransIndex,u8 *pDisposal)
 {
 	u8 temp;
 	u32 readed;	 
 	u8 buf[4];  
-	f_read(gfile,&temp,1,(UINT*)&readed);//得到长度		 
+	read(fd,&temp,1);//得到长度		 
 	switch(temp)
 	{
 		case GIF_PLAINTEXT:
 		case GIF_APPLICATION:
 		case GIF_COMMENT:
-			while(gif_getdatablock(gfile,0,256)>0);			//获取数据块
+			while(gif_getdatablock(fd,0,256)>0);			//获取数据块
 			return 0;
 		case GIF_GRAPHICCTL://图形控制扩展块
-			if(gif_getdatablock(gfile,buf,4)!=4)return 1;	//图形控制扩展块的长度必须为4 
+			if(gif_getdatablock(fd,buf,4)!=4)return 1;	//图形控制扩展块的长度必须为4 
  		 	gif->delay=(buf[2]<<8)|buf[1];					//得到延时 
 			*pDisposal=(buf[0]>>2)&0x7; 	    			//得到处理方法
 			if((buf[0]&0x1)!=0)*pTransIndex=buf[3];			//透明色表 
-			f_read(gfile,&temp,1,(UINT*)&readed);	 		//得到LZW长度	
- 			if(temp!=0)return 1;							//读取数据块结束符错误.
+			read(fd,&temp,1);	 		//得到LZW长度	
+ 			if(temp!=0)
+ 			    return 1;							//读取数据块结束符错误.
 			return 0;
 	}
 	return 1;//错误的数据
@@ -197,7 +201,7 @@ u8 gif_readextension(FIL *gfile,gif89a* gif, int *pTransIndex,u8 *pDisposal)
 //从LZW缓存中得到下一个LZW码,每个码包含12位
 //返回值:<0,错误.
 //		 其他,正常.
-int gif_getnextcode(FIL *gfile,gif89a* gif) 
+int gif_getnextcode(s32 fd,gif89a* gif) 
 {
 	int i,j,End;
 	long Result;
@@ -214,7 +218,7 @@ int gif_getnextcode(FIL *gfile,gif89a* gif)
 		if(gif->lzw->GetDone)return-1;//Error 
 		gif->lzw->aBuffer[0]=gif->lzw->aBuffer[gif->lzw->LastByte-2];
 		gif->lzw->aBuffer[1]=gif->lzw->aBuffer[gif->lzw->LastByte-1];
-		if((Count=gif_getdatablock(gfile,&gif->lzw->aBuffer[2],300))==0)gif->lzw->GetDone=1;
+		if((Count=gif_getdatablock(fd,&gif->lzw->aBuffer[2],300))==0)gif->lzw->GetDone=1;
 		if(Count<0)return -1;//Error 
 		gif->lzw->LastByte=2+Count;
 		gif->lzw->CurBit=(gif->lzw->CurBit-gif->lzw->LastBit)+16;
@@ -233,10 +237,10 @@ int gif_getnextcode(FIL *gfile,gif89a* gif)
 //得到LZW的下一个码
 //返回值:<0,错误(-1,不成功;-2,读到结束符了)
 //		 >=0,OK.(LZW的第一个码)
-int gif_getnextbyte(FIL *gfile,gif89a* gif) 
+int gif_getnextbyte(s32 fd,gif89a* gif) 
 {
 	int i,Code,Incode;
-	while((Code=gif_getnextcode(gfile,gif))>=0)
+	while((Code=gif_getnextcode(fd,gif))>=0)
 	{
 		if(Code==gif->lzw->ClearCode)
 		{
@@ -254,7 +258,7 @@ int gif_getnextbyte(FIL *gfile,gif89a* gif)
 			//Read the first code from the stack after clear ingand initializing*/
 			do
 			{
-				gif->lzw->FirstCode=gif_getnextcode(gfile,gif);
+				gif->lzw->FirstCode=gif_getnextcode(fd,gif);
 			}while(gif->lzw->FirstCode==gif->lzw->ClearCode);
 			gif->lzw->OldCode=gif->lzw->FirstCode;
 			return gif->lzw->FirstCode;
@@ -303,7 +307,7 @@ int gif_getnextbyte(FIL *gfile,gif89a* gif)
 //  Transparency - Color index which should be treated as transparent.
 //  Disposal     - Contains the disposal method of the previous image. If Disposal == 2, the transparent pixels
 //                 of the image are rendered with the background color.
-u8 gif_dispimage(FIL *gfile,gif89a* gif,u16 x0,u16 y0,int Transparency, u8 Disposal) 
+u8 gif_dispimage(s32 fd,gif89a* gif,u16 x0,u16 y0,int Transparency, u8 Disposal) 
 {
 	u32 readed;	   
    	u8 lzwlen;
@@ -317,7 +321,7 @@ u8 gif_dispimage(FIL *gfile,gif89a* gif,u16 x0,u16 y0,int Transparency, u8 Dispo
 	XEnd=Width+x0-1;
 	bkcolor=gif->colortbl[gif->gifLSD.bkcindex];
 	pTrans=(u16*)gif->colortbl;
-	f_read(gfile,&lzwlen,1,(UINT*)&readed);//得到LZW长度	 
+	read(fd,&lzwlen,1);//得到LZW长度	 
 	gif_initlzw(gif,lzwlen);//Initialize the LZW stack with the LZW code size 
 	Interlace=gif->gifISD.flag&0x40;//是否交织编码
 	for(YCnt=0,YPos=y0,Pass=0;YCnt<Height;YCnt++)
@@ -327,7 +331,7 @@ u8 gif_dispimage(FIL *gfile,gif89a* gif,u16 x0,u16 y0,int Transparency, u8 Dispo
 		for(XPos=x0;XPos<=XEnd;XPos++)
 		{
 			if(gif->lzw->sp>gif->lzw->aDecompBuffer)Index=*--(gif->lzw->sp);
-		    else Index=gif_getnextbyte(gfile,gif);	   
+		    else Index=gif_getnextbyte(fd,gif);	   
 			if(Index==-2)return 0;//Endcode     
 			if((Index<0)||(Index>=gif->numcolors))
 			{
@@ -427,7 +431,7 @@ void gif_clear2bkcolor(u16 x,u16 y,gif89a* gif,ImageScreenDescriptor pimge)
 //画GIF图像的一帧
 //gfile:gif文件.
 //x0,y0:开始显示的坐标
-u8 gif_drawimage(FIL *gfile,gif89a* gif,u16 x0,u16 y0)
+u8 gif_drawimage(s32 fd,gif89a* gif,u16 x0,u16 y0)
 {		  
 	u32 readed;
 	u8 res,temp;    
@@ -440,8 +444,8 @@ u8 gif_drawimage(FIL *gfile,gif89a* gif,u16 x0,u16 y0)
 	TransIndex=-1;				  
 	do
 	{
-		res=f_read(gfile,&Introducer,1,(UINT*)&readed);//读取一个字节
-		if(res)return 1;   
+		readed = read(fd,&Introducer,1);//读取一个字节
+		//if(readed != 1)return 1;   
 		switch(Introducer)
 		{		 
 			case GIF_INTRO_IMAGE://图像描述
@@ -450,22 +454,23 @@ u8 gif_drawimage(FIL *gfile,gif89a* gif,u16 x0,u16 y0)
 				previmg.width=gif->gifISD.width;
 				previmg.height=gif->gifISD.height;
 
-				res=f_read(gfile,(u8*)&gif->gifISD,9,(UINT*)&readed);//读取一个字节
-				if(res)return 1;			 
+				readed=read(fd,(u8*)&gif->gifISD,9);//读取一个字节
+				//if(readed != 1)return 1;  			 
 				if(gif->gifISD.flag&0x80)//存在局部颜色表
 				{							  
 					gif_savegctbl(gif);//保存全局颜色表
 					numcolors=2<<(gif->gifISD.flag&0X07);//得到局部颜色表大小
-					if(gif_readcolortbl(gfile,gif,numcolors))return 1;//读错误	
+					if(gif_readcolortbl(fd,gif,numcolors))return 1;//读错误	
 				}
 				if(Disposal==2)gif_clear2bkcolor(x0,y0,gif,previmg); 
-				gif_dispimage(gfile,gif,x0+gif->gifISD.xoff,y0+gif->gifISD.yoff,TransIndex,Disposal);
+				gif_dispimage(fd,gif,x0+gif->gifISD.xoff,y0+gif->gifISD.yoff,TransIndex,Disposal);
  				while(1)
 				{
-					f_read(gfile,&temp,1,(UINT*)&readed);//读取一个字节
+					read(fd,&temp,1);//读取一个字节
 					if(temp==0)break;
-					readed=f_tell(gfile);//还存在块.	
-					if(f_lseek(gfile,readed+temp))break;//继续向后偏移	 
+					if(lseek(fd,temp,SEEK_CUR) == -1)//还存在块.
+					    break;	//定位失败则退出
+					//if(f_lseek(gfile,readed+temp))break;//继续向后偏移	 
 			    }
 				if(temp!=0)return 1;//Error 
 				return 0;
@@ -473,7 +478,7 @@ u8 gif_drawimage(FIL *gfile,gif89a* gif,u16 x0,u16 y0)
 				return 2;//代表图像解码完成了.
 			case GIF_INTRO_EXTENSION:
 				//Read image extension*/
-				res=gif_readextension(gfile,gif,&TransIndex,&Disposal);//读取图像扩展块消息
+				res=gif_readextension(fd,gif,&TransIndex,&Disposal);//读取图像扩展块消息
 				if(res)return 1;
 	 			break;
 			default:
@@ -498,28 +503,29 @@ u8 gif_decode(const u8 *filename,u16 x,u16 y,u16 width,u16 height)
 	u8 res=0;
 	u16 dtime=0;//解码延时
 	gif89a *mygif89a;
-	FIL *gfile;
-#if GIF_USE_MALLOC==1 	//定义是否使用malloc,这里我们选择使用malloc
-	gfile=(FIL*)pic_memalloc(sizeof(FIL));
-	if(gfile==NULL)res=PIC_MEM_ERR;//申请内存失败 
+	//FIL *gfile;
+	s32 fd;
+#if GIF_USE_MALLOC==1 	//定义是否使用malloc,这里我们选择使用malloc 
 	mygif89a=(gif89a*)pic_memalloc(sizeof(gif89a));
-	if(mygif89a==NULL)res=PIC_MEM_ERR;//申请内存失败    
+	if(mygif89a==NULL)
+	    res=PIC_MEM_ERR;//申请内存失败    
 	mygif89a->lzw=(LZW_INFO*)pic_memalloc(sizeof(LZW_INFO));
-	if(mygif89a->lzw==NULL)res=PIC_MEM_ERR;//申请内存失败 
+	if(mygif89a->lzw==NULL)
+	    res=PIC_MEM_ERR;//申请内存失败 
 #else
-	gfile=&f_gfile;
 	mygif89a=&tgif89a;
 	mygif89a->lzw=&tlzw;
 #endif
 
 	if(res==0)//OK
 	{
-		res=f_open(gfile,(TCHAR *)filename,FA_READ);
-		if(res==0)//打开文件ok
+		fd = open(filename,O_RDONLY);
+		if(fd >= 0)//打开文件ok
 		{
-			if(gif_check_head(gfile))res=PIC_FORMAT_ERR;
-			if(gif_getinfo(gfile,mygif89a))res=PIC_FORMAT_ERR;
-			if(mygif89a->gifLSD.width>width||mygif89a->gifLSD.height>height)res=PIC_SIZE_ERR;//尺寸太大.
+			if(gif_check_head(fd))res=PIC_FORMAT_ERR;
+			if(gif_getinfo(fd,mygif89a))res=PIC_FORMAT_ERR;
+			if(mygif89a->gifLSD.width>width||mygif89a->gifLSD.height>height)
+			    res=PIC_SIZE_ERR;//尺寸太大.
 			else
 			{
 				x=(width-mygif89a->gifLSD.width)/2+x;
@@ -528,9 +534,11 @@ u8 gif_decode(const u8 *filename,u16 x,u16 y,u16 width,u16 height)
 			gifdecoding=1;
 			while(gifdecoding&&res==0)//解码循环
 			{	 
-				res=gif_drawimage(gfile,mygif89a,x,y);//显示一张图片
-				if(mygif89a->gifISD.flag&0x80)gif_recovergctbl(mygif89a);//恢复全局颜色表
-				if(mygif89a->delay)dtime=mygif89a->delay;
+				res=gif_drawimage(fd,mygif89a,x,y);//显示一张图片
+				if(mygif89a->gifISD.flag&0x80)
+				    gif_recovergctbl(mygif89a);//恢复全局颜色表
+				if(mygif89a->delay)
+				    dtime=mygif89a->delay;
 				else dtime=10;//默认延时
 				while(dtime--&&gifdecoding)delay_ms(10);//延迟
 				if(res==2)
@@ -540,10 +548,9 @@ u8 gif_decode(const u8 *filename,u16 x,u16 y,u16 width,u16 height)
 				}
 			}
 		}
-		f_close(gfile);
+		close(fd);
 	}   
 #if GIF_USE_MALLOC==1 	//定义是否使用malloc,这里我们选择使用malloc
-	pic_memfree(gfile);
 	pic_memfree(mygif89a->lzw);
 	pic_memfree(mygif89a); 
 #endif 

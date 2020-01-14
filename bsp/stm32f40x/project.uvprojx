@@ -592,6 +592,11 @@
               <FileType>1</FileType>
               <FilePath>.\drivers\vs1003\vs1003_recorder.c</FilePath>
             </File>
+            <File>
+              <FileName>gif.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\software\PICTURE\gif.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
