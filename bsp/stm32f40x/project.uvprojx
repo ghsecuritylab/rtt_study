@@ -911,6 +911,11 @@
               <FileType>2</FileType>
               <FilePath>..\..\libcpu\arm\cortex-m4\context_rvds.S</FilePath>
             </File>
+            <File>
+              <FileName>tjpgd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\software\PICTURE\tjpgd.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

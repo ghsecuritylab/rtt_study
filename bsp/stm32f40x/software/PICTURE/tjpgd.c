@@ -985,15 +985,12 @@ JRESULT jd_decomp (
 //ÏÂÃæ¸ù¾İÊÇ·ñÊ¹ÓÃmallocÀ´¾ö¶¨±äÁ¿µÄ·ÖÅä·½·¨.
 #if JPEG_USE_MALLOC == 1 //Ê¹ÓÃmalloc	 
 
-FIL *f_jpeg;			//JPEGÎÄ¼şÖ¸Õë
 JDEC *jpeg_dev;   		//´ı½âÂë¶ÔÏó½á¹¹ÌåÖ¸Õë  
 u8  *jpg_buffer;    	//¶¨Òåjpeg½âÂë¹¤×÷Çø´óĞ¡(×îÉÙĞèÒª3092×Ö½Ú)£¬×÷Îª½âÑ¹»º³åÇø£¬±ØĞë4×Ö½Ú¶ÔÆë
 
 //¸øÕ¼ÄÚ´æ´óµÄÊı×é/½á¹¹ÌåÉêÇëÄÚ´æ
 u8 jpeg_mallocall(void)
-{
-	f_jpeg=(FIL*)pic_memalloc(sizeof(FIL));
-	if(f_jpeg==NULL)return PIC_MEM_ERR;			//ÉêÇëÄÚ´æÊ§°Ü.	  
+{ 
 	jpeg_dev=(JDEC*)pic_memalloc(sizeof(JDEC));
 	if(jpeg_dev==NULL)return PIC_MEM_ERR;		//ÉêÇëÄÚ´æÊ§°Ü.
 	jpg_buffer=(u8*)pic_memalloc(JPEG_WBUF_SIZE);
@@ -1003,18 +1000,17 @@ u8 jpeg_mallocall(void)
 //ÊÍ·ÅÄÚ´æ
 void jpeg_freeall(void)
 {
-	pic_memfree(f_jpeg);		//ÊÍ·Åf_jpegÉêÇëµ½µÄÄÚ´æ
 	pic_memfree(jpeg_dev);		//ÊÍ·Åjpeg_devÉêÇëµ½µÄÄÚ´æ
 	pic_memfree(jpg_buffer);	//ÊÍ·Åjpg_bufferÉêÇëµ½µÄÄÚ´æ
 }
 
 #else 	//²»Ê¹ÓÃmalloc   
 
-FIL  tf_jpeg; 
-JDEC tjpeg_dev;   		  
-FIL  *f_jpeg=&tf_jpeg;						//JPEGÎÄ¼şÖ¸Õë
-JDEC *jpeg_dev=&tjpeg_dev;   				//´ı½âÂë¶ÔÏó½á¹¹ÌåÖ¸Õë   
-__align(4) u8 jpg_buffer[JPEG_WBUF_SIZE];	//¶¨Òåjpeg½âÂë¹¤×÷Çø´óĞ¡(×îÉÙĞèÒª3092×Ö½Ú)£¬×÷Îª½âÑ¹»º³åÇø£¬±ØĞë4×Ö½Ú¶ÔÆë
+//FIL  tf_jpeg; 
+//JDEC tjpeg_dev;   		  
+//FIL  *f_jpeg=&tf_jpeg;						//JPEGÎÄ¼şÖ¸Õë
+//JDEC *jpeg_dev=&tjpeg_dev;   				//´ı½âÂë¶ÔÏó½á¹¹ÌåÖ¸Õë   
+//__align(4) u8 jpg_buffer[JPEG_WBUF_SIZE];	//¶¨Òåjpeg½âÂë¹¤×÷Çø´óĞ¡(×îÉÙĞèÒª3092×Ö½Ú)£¬×÷Îª½âÑ¹»º³åÇø£¬±ØĞë4×Ö½Ú¶ÔÆë
 	
 #endif
 
@@ -1026,12 +1022,14 @@ __align(4) u8 jpg_buffer[JPEG_WBUF_SIZE];	//¶¨Òåjpeg½âÂë¹¤×÷Çø´óĞ¡(×îÉÙĞèÒª3092×
 u32 jpeg_in_func(JDEC* jd,u8* buf,u32 num) 
 { 
     u32  rb; //¶ÁÈ¡µ½µÄ×Ö½ÚÊı
-    FIL *dev=(FIL*)jd->device;  //´ı½âÂëµÄÎÄ¼şµÄĞÅÏ¢£¬Ê¹ÓÃFATFSÖĞµÄFIL½á¹¹ÀàĞÍ½øĞĞ¶¨Òå
+    s32 fd=*(u32*)jd->device;  //´ı½âÂëµÄÎÄ¼şµÄĞÅÏ¢£¬Ê¹ÓÃFATFSÖĞµÄFIL½á¹¹ÀàĞÍ½øĞĞ¶¨Òå
     if(buf)     				//¶ÁÈ¡Êı¾İÓĞĞ§£¬¿ªÊ¼¶ÁÈ¡Êı¾İ
     { 
-        f_read(dev,buf,num,&rb);//µ÷ÓÃFATFSµÄf_readº¯Êı£¬ÓÃÓÚ°ÑjpegÎÄ¼şµÄÊı¾İ¶ÁÈ¡³öÀ´
+        rb = read(fd,buf,num);//µ÷ÓÃFATFSµÄf_readº¯Êı£¬ÓÃÓÚ°ÑjpegÎÄ¼şµÄÊı¾İ¶ÁÈ¡³öÀ´
         return rb;        		//·µ»Ø¶ÁÈ¡µ½µÄ×Ö½ÚÊıÄ¿
-    }else return (f_lseek(dev,f_tell(dev)+num)==FR_OK)?num:0;//ÖØĞÂ¶¨Î»Êı¾İµã£¬Ïàµ±ÓÚÉ¾³ıÖ®Ç°µÄn×Ö½ÚÊı¾İ 
+    }
+    else 
+    return (lseek(fd,num,SEEK_CUR) != -1) ? num:0;//ÖØĞÂ¶¨Î»Êı¾İµã£¬Ïàµ±ÓÚÉ¾³ıÖ®Ç°µÄn×Ö½ÚÊı¾İ 
 }  
 //²ÉÓÃÌî³äµÄ·½Ê½½øĞĞÍ¼Æ¬½âÂëÏÔÊ¾
 //jd:´¢´æ´ı½âÂëµÄ¶ÔÏóĞÅÏ¢µÄ½á¹¹Ìå
@@ -1091,6 +1089,7 @@ u8 jpg_decode(const u8 *filename,u8 fast)
 	u8 res=0;	//·µ»ØÖµ 
 	u8 scale;	//Í¼ÏñÊä³ö±ÈÀı 0,1/2,1/4,1/8  
 	UINT (*outfun)(JDEC*, void*, JRECT*);
+	s32 fd;
 	
 #if JPEG_USE_MALLOC == 1	//Ê¹ÓÃmalloc
 	res=jpeg_mallocall(); 
@@ -1098,10 +1097,10 @@ u8 jpg_decode(const u8 *filename,u8 fast)
 	if(res==0)
 	{
 		//µÃµ½JPEG/JPGÍ¼Æ¬µÄ¿ªÊ¼ĞÅÏ¢		 
-		res=f_open(f_jpeg,(const TCHAR*)filename,FA_READ);//´ò¿ªÎÄ¼ş
-		if(res==FR_OK)//´ò¿ªÎÄ¼ş³É¹¦
+		fd=open(filename,O_RDONLY);//´ò¿ªÎÄ¼ş
+		if(fd >= 0)//´ò¿ªÎÄ¼ş³É¹¦
 		{ 
-			res=jd_prepare(jpeg_dev,jpeg_in_func,jpg_buffer,JPEG_WBUF_SIZE,f_jpeg);//Ö´ĞĞ½âÂëµÄ×¼±¸¹¤×÷£¬µ÷ÓÃTjpgDecÄ£¿éµÄjd_prepareº¯Êı
+			res=jd_prepare(jpeg_dev,jpeg_in_func,jpg_buffer,JPEG_WBUF_SIZE,(void*)&fd);//Ö´ĞĞ½âÂëµÄ×¼±¸¹¤×÷£¬µ÷ÓÃTjpgDecÄ£¿éµÄjd_prepareº¯Êı
 			outfun=jpeg_out_func_point;//Ä¬ÈÏ²ÉÓÃ»­µãµÄ·½Ê½ÏÔÊ¾
 			if(res==JDR_OK)//×¼±¸½âÂë³É¹¦ 
 			{ 	
@@ -1109,12 +1108,15 @@ u8 jpg_decode(const u8 *filename,u8 fast)
 				{ 
 					if((jpeg_dev->width>>scale)<=picinfo.S_Width&&(jpeg_dev->height>>scale)<=picinfo.S_Height)//ÔÚÄ¿±êÇøÓòÄÚ
 					{	
-						if(((jpeg_dev->width>>scale)!=picinfo.S_Width)&&((jpeg_dev->height>>scale)!=picinfo.S_Height&&scale))scale=0;//²»ÄÜÌù±ß,Ôò²»Ëõ·Å
-						else outfun=jpeg_out_func_fill;	//ÔÚÏÔÊ¾³ß´çÒÔÄÚ,¿ÉÒÔ²ÉÓÃÌî³äµÄ·½Ê½ÏÔÊ¾ 
+						if(((jpeg_dev->width>>scale)!=picinfo.S_Width)&&((jpeg_dev->height>>scale)!=picinfo.S_Height&&scale))
+						    scale=0;//²»ÄÜÌù±ß,Ôò²»Ëõ·Å
+						else 
+						    outfun=jpeg_out_func_fill;	//ÔÚÏÔÊ¾³ß´çÒÔÄÚ,¿ÉÒÔ²ÉÓÃÌî³äµÄ·½Ê½ÏÔÊ¾ 
 						break; 							
 					} 
 				} 
-				if(scale==4)scale=0;//´íÎó
+				if(scale==4)
+				    scale=0;//´íÎó
 				if(fast==0)//²»ĞèÒª¿ìËÙ½âÂë
 				{ 
 					outfun=jpeg_out_func_point;//Ä¬ÈÏ²ÉÓÃ»­µãµÄ·½Ê½ÏÔÊ¾
@@ -1126,7 +1128,7 @@ u8 jpg_decode(const u8 *filename,u8 fast)
 				res=jd_decomp(jpeg_dev,outfun,scale); 
 			}
 		} 
-		f_close(f_jpeg); //½âÂë¹¤×÷Ö´ĞĞ³É¹¦£¬·µ»Ø0
+		close(fd); //½âÂë¹¤×÷Ö´ĞĞ³É¹¦£¬·µ»Ø0
 	}
 #if JPEG_USE_MALLOC == 1//Ê¹ÓÃmalloc
 	jpeg_freeall();		//ÊÍ·ÅÄÚ´æ

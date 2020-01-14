@@ -323,7 +323,8 @@ u8 ai_load_picfile(const u8 *filename,u16 x,u16 y,u16 width,u16 height,u8 fast)
 			break;
 		case T_JPG:
 		case T_JPEG:
-			//res=jpg_decode(filename,fast);				//½âÂëJPG/JPEG	  	  
+			res=jpg_decode(filename,fast);				//½âÂëJPG/JPEG	
+			rt_kprintf("jpg res:%d\n",res);
 			break;
 		case T_GIF:
 			res=gif_decode(filename,x,y,width,height);	//½âÂëgif  	
