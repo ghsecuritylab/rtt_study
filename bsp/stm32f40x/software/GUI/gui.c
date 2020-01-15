@@ -23,15 +23,16 @@
 
 //此处必须在外部申明asc2_1206和asc2_1608;
 //#include "font.h" 
-extern const unsigned char asc2_1206[95][12];
-extern const unsigned char asc2_1608[95][16];
+//unsigned char *asc2_1206 = NULL;
+//unsigned char *asc2_1608 = NULL;
 extern const unsigned char asc2_2412[95][36];
 
-extern u8* asc2_2814;	//普通字体28*14大字体点阵集
-extern u8* asc2_3618;	//普通字体36*18大字体点阵集
-extern u8* asc2_5427;	//普通字体54*27大字体点阵集
-extern u8* asc2_s6030;	//数码管字体60*30大字体点阵集
+u8* asc2_2814 = NULL;	//普通字体28*14大字体点阵集
+u8* asc2_3618 = NULL;	//普通字体36*18大字体点阵集
+u8* asc2_5427 = NULL;	//普通字体54*27大字体点阵集
+u8* asc2_s6030 = NULL;	//数码管字体60*30大字体点阵集
 
+extern const unsigned char asc2_2412[95][36];
 
 
 ////////////////////////////GUI通用字符串集//////////////////////////////
@@ -83,15 +84,18 @@ void _gui_draw_point(u16 x0,u16 y0,u16 color)
 	LCD_DrawPoint(x0,y0);
 	POINT_COLOR=tempcolor;
 }
+extern u16 get_pixel(u16 x, u16 y);
+extern void piclib_fill(u16 x,u16 y,u16 xe,u16 ye,u16 color);
+extern void piclib_fill_color(u16 x,u16 y,u16 width,u16 height,u16 *color);
 
 ////////////////////////////////////////////////////////////////////
 //gui初始化
 void gui_init(void)
 {
-	gui_phy.read_point=LCD_ReadPoint;
+	gui_phy.read_point=get_pixel;
 	gui_phy.draw_point=LCD_Fast_DrawPoint;//快速画点
-	gui_phy.fill=LCD_Fill;		 
-	gui_phy.colorfill=LCD_Color_Fill;		 
+	gui_phy.fill=piclib_fill;		 
+	gui_phy.colorfill=piclib_fill_color;		 
 	gui_phy.back_color=BACK_COLOR;		 
 	gui_phy.lcdwidth=lcddev.width;
 	gui_phy.lcdheight=lcddev.height; 
@@ -744,10 +748,12 @@ void gui_show_ptchar(u16 x,u16 y,u16 xend,u16 yend,u16 offset,u16 color,u16 size
 		switch(size)
 		{
 			case 12:
-				temp=asc2_1206[chr][t]; 	//调用1206字体
+			    //if(asc2_1206==NULL)return;
+				//temp=asc2_1206[chr][t]; 	//调用1206字体
 				break;
 			case 16:
-				temp=asc2_1608[chr][t];		//调用1608字体
+			    //if(asc2_1608==NULL)return;
+				//temp=asc2_1608[chr][t];		//调用1608字体
 				break;
 			case 24:
 				temp=asc2_2412[chr][t];		//调用2412字体

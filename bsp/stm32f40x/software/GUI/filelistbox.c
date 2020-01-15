@@ -1,7 +1,6 @@
 #include "filelistbox.h"
-#include "ff.h"
-#include "exfuns.h"
-#include "piclib.h"			 
+#include "piclib.h"	
+#if 0
 //////////////////////////////////////////////////////////////////////////////////	 
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32F407开发板
@@ -852,7 +851,7 @@ void tsflistbox_draw(void)
 {
 	filelistbox_draw_listbox(tfilelistbox);	 
 }
-
+#endif
 
 
 

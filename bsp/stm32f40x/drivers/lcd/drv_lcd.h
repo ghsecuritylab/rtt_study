@@ -41,10 +41,11 @@ typedef struct
 #define ili9341					((lcd_ili9341_t *) LCD_ILI9341_BASE)
 
 //LCD的画笔颜色和背景色	   
-extern u16  BRUSH_COLOR;//默认红色    
+extern u16  POINT_COLOR;//默认红色    
 extern u16  BACK_COLOR; //背景颜色.默认为白色
-#define POINT_COLOR 0x001F
-#define BACK_COLOR  0
+
+//#define POINT_COLOR 0x001F
+//#define BACK_COLOR  0
 
 #define LCD_HIGH 320//屏高度
 #define LCD_WIDTH 480//屏宽度
@@ -104,7 +105,9 @@ void LCD_DisplayString(u16 x,u16 y,u8 size,u8 *p);		           //显示一个12/16/2
 void LCD_DisplayString_color(u16 x,u16 y,u8 size,u8 *p,u16 brushcolor,u16 backcolor); //显示一个12/16/24字体自定义颜色的字符串
 void LCD_DisplayNum(u16 x,u16 y,u32 num,u8 len,u8 size,u8 mode);				//显示 数字
 void LCD_DisplayNum_color(u16 x,u16 y,u32 num,u8 len,u8 size,u8 mode,u16 brushcolor,u16 backcolor); //显示自定义颜色数字	  	   																			 
-	
+
+void LCD_Fast_DrawPoint(u16 x,u16 y,u16 color);
+
 
 #endif  
 	 

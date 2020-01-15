@@ -131,14 +131,18 @@ struct rtgui_driver
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void piclib_fill_color(u16 x,u16 y,u16 width,u16 height,u16 *color);
-void piclib_init(void);								//初始化画图
-u16 piclib_alpha_blend(u16 src,u16 dst,u8 alpha);	//alphablend处理
-void ai_draw_init(void);							//初始化智能画图
-u8 is_element_ok(u16 x,u16 y,u8 chg);				//判断像素是否有效
-u8 ai_load_picfile(const u8 *filename,u16 x,u16 y,u16 width,u16 height,u8 fast);//智能画图
-void *pic_memalloc (u32 size);	//pic申请内存
-void pic_memfree (void* mf);	//pic释放内存
+extern void piclib_fill_color(u16 x,u16 y,u16 width,u16 height,u16 *color);
+extern void piclib_init(void);								//初始化画图
+extern u16 piclib_alpha_blend(u16 src,u16 dst,u8 alpha);	//alphablend处理
+extern void ai_draw_init(void);							//初始化智能画图
+extern u8 is_element_ok(u16 x,u16 y,u8 chg);				//判断像素是否有效
+extern u8 ai_load_picfile(const u8 *filename,u16 x,u16 y,u16 width,u16 height,u8 fast);//智能画图
+extern void *pic_memalloc (u32 size);	//pic申请内存
+extern void pic_memfree (void* mf);	//pic释放内存
+
+extern u16 get_pixel(u16 x, u16 y);
+extern void set_pixel(u16 x, u16 y,u16 c);
+extern void piclib_fill(u16 x,u16 y,u16 xe,u16 ye,u16 color);
 
 #define GET_PIXEL(dst, x, y, type)  \
     (type *)((rt_uint8_t*)((dst)->framebuffer) + (y) * (dst)->pitch + (x) * _UI_BITBYTES((dst)->bits_per_pixel))

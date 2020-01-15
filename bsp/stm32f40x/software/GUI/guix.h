@@ -2,10 +2,11 @@
 #define __GUIX_H 	
 #include "sys.h"
 #include "malloc.h"
-#include "lcd.h"
 #include "usart.h"
-#include "delay.h"
 #include "string.h"
+#include <dfs.h>
+#include <dfs_posix.h>
+
 //////////////////////////////////////////////////////////////////////////////////	 
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32F407开发板
@@ -28,11 +29,7 @@
 
  
 //用到ucos的滴答时钟
-typedef unsigned int   INT32U;	 
-extern volatile  INT32U  OSTime;
-//gui时间计数器,需要在外部实现
-//gui定时器,每10ms增加1次
-#define GUI_TIMER_10MS	OSTime/2 	//ucos的调度时间设置为5ms 
+#define GUI_TIMER_10MS	(rt_tick_get()/2) 	//ucos的调度时间设置为5ms 
 
 #define GUI_VERSION		101			//gui版本(扩大了100倍),100表示V1.00
 //////////////////////////////////////////////////////////////////////////////////////////////

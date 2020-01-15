@@ -348,7 +348,12 @@ u8 stdbmp_decode(const u8 *filename)
 	pic_memfree(databuf);	  
 #endif	
 	return 0;		//BMP显示结束.    					   
-}		 
+}	
+u8 minibmp_decode(u8 *filename,u16 x,u16 y,u16 width,u16 height,u16 acolor,u8 mode)//尺寸小于240*320的bmp图片解码.
+{
+    return 0;
+}
+
 //小尺寸的bmp解码,解码filename这个BMP文件		
 //filename:包含路径的文件名
 //x,y,width,height:显示区域大小(在区域正中央显示)

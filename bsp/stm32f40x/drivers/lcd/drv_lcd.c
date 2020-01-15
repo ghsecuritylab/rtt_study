@@ -119,6 +119,8 @@ const unsigned char asc2_2412[95][36]={
 };
 #endif
 lcd_info_t lcddev;
+u16 POINT_COLOR=0x0000;	//画笔颜色
+u16 BACK_COLOR=0xFFFF;  //背景色 
 
 void delay_us(rt_uint32_t nus)
 {
@@ -649,6 +651,12 @@ void LCD_Fast_DrawPoint(u16 x,u16 y,u16 color)
 	ili9341_set_cursor(x, y);
 	ili9341_write_ram_prepare();
 	ili9341->ram = color;
+}
+void LCD_DrawPoint(u16 x,u16 y)
+{
+	ili9341_set_cursor(x, y);
+	ili9341_write_ram_prepare();
+	ili9341->ram =POINT_COLOR; 
 }
 
 //在指定位置显示一个字符

@@ -61,7 +61,7 @@ rt_err_t rtgui_set_device(rt_device_t device)
     rt_kprintf("set lcd ok\n");
     return RT_EOK;
 }
-void gui_init(void)
+void pic_gui_init(void)
 {
     rt_device_t device;
     rt_err_t  err;
@@ -77,7 +77,7 @@ void gui_init(void)
     piclib_init();
     rt_kprintf("gui_init :%d\n",err);
 }
-INIT_APP_EXPORT(gui_init);
+INIT_APP_EXPORT(pic_gui_init);
 
 void set_pixel(u16 x, u16 y,u16 c)
 {

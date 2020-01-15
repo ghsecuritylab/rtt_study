@@ -164,7 +164,7 @@ void window_draw(_window_obj * windowx)
 }
 
 //此定义在main.c函数里面,如果不需要tpad返回,直接去掉.
-extern volatile u8 system_task_return;		//任务强制返回标志.
+//extern volatile u8 system_task_return;		//任务强制返回标志.
 
 
 #define MSG_BOX_BTN1_WIDTH 			60
@@ -258,16 +258,16 @@ u8 window_msg_box(u16 x,u16 y,u16 width,u16 height,u8 *str,u8 *caption,u8 font,u
 		else offy=(strheight-temp)/2;
 		gui_show_string(str,x+offx,y+WIN_CAPTION_HEIGHT+offy,width-offx*2,strheight,font,color);	//显示要显示的文字
 	}
-	system_task_return=0;//取消TPAD
+	//system_task_return=0;//取消TPAD
 	while(rval==0)
 	{
-		tp_dev.scan(0);    
-		in_obj.get_key(&tp_dev,IN_TYPE_TOUCH);	//得到按键键值   
+		//tp_dev.scan(0);    
+		//in_obj.get_key(&tp_dev,IN_TYPE_TOUCH);	//得到按键键值   
  		//在其他系统里面,用户可以自行去掉此句
- 		if(system_task_return)//TPAD返回
+ 		//if(system_task_return)//TPAD返回
 		{	
-			rval=0XFE;//视为取消的情况,退出
- 			break;			
+			//rval=0XFE;//视为取消的情况,退出
+ 			//break;			
 		}
 		delay_ms(10);							//延时10ms
 		if(okbtn)

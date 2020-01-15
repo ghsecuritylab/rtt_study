@@ -22,6 +22,7 @@
 #include "edit.h"
 #include "memo.h"
 #include "window.h"
+#include "piclib.h"
 
 
 #endif

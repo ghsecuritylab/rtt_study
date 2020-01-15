@@ -55,11 +55,7 @@ if GetDepend('RT_MUSIC_SOFT_DECODE'):
 	CPPPATH += [cwd + '/mp3/']
 	CPPPATH += [cwd + '/mp3/real/']
 	CPPPATH += [cwd + '/mp3/pub/']
-
-if GetDepend('RT_MUSIC_VS1003'):
-    src += Glob(cwd+'/vs1003/*.c')
 	
-CPPPATH += [cwd + '/vs1003/']	
 CPPPATH += [cwd + '/eth/']
 CPPPATH += [cwd + '/../../../components/drivers/include/drivers/']
 CPPPATH += [cwd + '/usbdevice/inc/']
