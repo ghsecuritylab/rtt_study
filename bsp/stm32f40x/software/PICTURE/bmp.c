@@ -73,6 +73,7 @@ u8 stdbmp_24_decode(const u8 *filename) //bmp24解码
 	}
     bmp_file_len = lseek(fd, 0, SEEK_END);
     rt_kprintf("bmp file len:%d\n",bmp_file_len);
+    lseek(fd,0,SEEK_SET);
     if(us_sram)
     {
         readlen = bmp_file_len;
@@ -133,11 +134,13 @@ u8 stdbmp_24_decode(const u8 *filename) //bmp24解码
 				    rt_kprintf("bmp unsurport \n");
 				    return 0;
 				}
-				count += 3;		  
+					  
 				if(x<picinfo.ImgWidth)	 					 			   
 				{						 				 	  	       
 					pic_phy.draw_point(x+picinfo.S_XOFF,y+picinfo.S_YOFF-1,color);//显示图片										    
 				}
+				//countpix++;//像素累加
+				countpix += 3;//之前是++导致图片看起来是扁的，应该是加#
 				if(countpix>=rowlen)//水平方向像素值到了.换行
 				{		 
 					y--; //图片数据是倒着组织的
@@ -145,9 +148,10 @@ u8 stdbmp_24_decode(const u8 *filename) //bmp24解码
 					    break;			 
 					x=0; 
 					countpix=0;
-				}	 
+				}	
+				count += 3;	
 				x++;//x轴增加一个像素 	  
-				countpix++;//像素累加
+				
 			} 
 			if(us_sram)
 			{
